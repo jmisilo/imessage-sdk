@@ -1,0 +1,52 @@
+{
+  "name": "imessage-sdk",
+  "version": "0.0.0",
+  "description": "Provider-neutral TypeScript SDK for iMessage infrastructure",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./blooio": {
+      "types": "./dist/blooio.d.ts",
+      "import": "./dist/blooio.js",
+      "default": "./dist/blooio.js"
+    },
+    "./photon": {
+      "types": "./dist/photon.d.ts",
+      "import": "./dist/photon.js",
+      "default": "./dist/photon.js"
+    },
+    "./sendblue": {
+      "types": "./dist/sendblue.d.ts",
+      "import": "./dist/sendblue.js",
+      "default": "./dist/sendblue.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "prepack": "pnpm build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --project tsconfig.json --noEmit"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
