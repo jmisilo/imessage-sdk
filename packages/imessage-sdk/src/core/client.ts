@@ -12,6 +12,7 @@ import type {
   EditMessageInput,
   IMessageProviderName,
   Message,
+  MessageLocator,
   OpenConversationInput,
   ProviderConversation,
   ProviderMessage,
@@ -44,14 +45,14 @@ export interface IMessageClient<
     send(
       input: SendMessageInput,
     ): Promise<SentMessage<ProviderNameOf<TProvider>, TConnectionId>>;
-    get(
-      messageId: string,
-    ): Promise<Message<ProviderNameOf<TProvider>, TConnectionId> | null>;
+    get(message: MessageLocator): Promise<
+      Message<ProviderNameOf<TProvider>, TConnectionId> | null
+    >;
     edit(
-      messageId: string,
+      message: MessageLocator,
       input: EditMessageInput,
     ): Promise<Message<ProviderNameOf<TProvider>, TConnectionId>>;
-    delete(messageId: string): Promise<void>;
+    delete(message: MessageLocator): Promise<void>;
   };
 
   readonly conversations: {
@@ -61,6 +62,7 @@ export interface IMessageClient<
     get(
       conversationId: string,
     ): Promise<Conversation<ProviderNameOf<TProvider>, TConnectionId> | null>;
+    markRead(conversationId: string): Promise<void>;
   };
 
   readonly reactions: {
@@ -109,6 +111,11 @@ function validateProvider(provider: AnyIMessageProvider): void {
       capabilities.conversations.get,
       provider.conversations.get,
       "conversations.get",
+    ],
+    [
+      capabilities.conversations.markRead,
+      provider.conversations.markRead,
+      "conversations.markRead",
     ],
     [capabilities.interactions.reactions, provider.reactions, "reactions"],
     [capabilities.interactions.typingStart, provider.typing, "typing.start"],
@@ -308,7 +315,7 @@ export function createIMessageClient<
           TConnectionId
         >;
       },
-      async get(messageId) {
+      async get(message) {
         assertOpen();
 
         if (!provider.capabilities.messages.get) {
@@ -320,12 +327,12 @@ export function createIMessageClient<
           "messages.get",
         );
 
-        const message = await get.call(provider.messages, messageId);
-        return message === null
+        const result = await get.call(provider.messages, message);
+        return result === null
           ? null
-          : decorateMessage(message, provider.name, connectionId);
+          : decorateMessage(result, provider.name, connectionId);
       },
-      async edit(messageId, input) {
+      async edit(message, input) {
         assertOpen();
 
         if (!provider.capabilities.messages.edit) {
@@ -337,10 +344,10 @@ export function createIMessageClient<
           "messages.edit",
         );
 
-        const message = await edit.call(provider.messages, messageId, input);
-        return decorateMessage(message, provider.name, connectionId);
+        const result = await edit.call(provider.messages, message, input);
+        return decorateMessage(result, provider.name, connectionId);
       },
-      async delete(messageId) {
+      async delete(message) {
         assertOpen();
 
         if (!provider.capabilities.messages.delete) {
@@ -352,7 +359,7 @@ export function createIMessageClient<
           "messages.delete",
         );
 
-        await deleteMessage.call(provider.messages, messageId);
+        await deleteMessage.call(provider.messages, message);
       },
     },
     conversations: {
@@ -394,6 +401,19 @@ export function createIMessageClient<
         return conversation === null
           ? null
           : decorateConversation(conversation, provider.name, connectionId);
+      },
+      async markRead(conversationId) {
+        assertOpen();
+
+        if (!provider.capabilities.conversations.markRead) {
+          unsupported("conversations.markRead");
+        }
+
+        const markRead = requireImplementation(
+          provider.conversations.markRead,
+          "conversations.markRead",
+        );
+        await markRead.call(provider.conversations, conversationId);
       },
     },
     reactions: {

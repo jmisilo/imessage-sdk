@@ -4,6 +4,7 @@ import type {
   AddReactionInput,
   EditMessageInput,
   IMessageProviderName,
+  MessageLocator,
   OpenConversationInput,
   ProviderConversation,
   ProviderMessage,
@@ -15,17 +16,18 @@ import type {
 
 export interface ProviderMessages {
   send(input: SendMessageInput): Promise<ProviderSentMessage>;
-  get?(messageId: string): Promise<ProviderMessage | null>;
+  get?(message: MessageLocator): Promise<ProviderMessage | null>;
   edit?(
-    messageId: string,
+    message: MessageLocator,
     input: EditMessageInput,
   ): Promise<ProviderMessage>;
-  delete?(messageId: string): Promise<void>;
+  delete?(message: MessageLocator): Promise<void>;
 }
 
 export interface ProviderConversations {
   open(input: OpenConversationInput): Promise<ProviderConversation>;
   get?(conversationId: string): Promise<ProviderConversation | null>;
+  markRead?(conversationId: string): Promise<void>;
 }
 
 export interface ProviderReactions {

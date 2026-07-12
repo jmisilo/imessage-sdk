@@ -38,10 +38,14 @@
     "dev": "tsup --watch",
     "prepack": "pnpm build",
     "test": "vitest run",
+    "test:integration:blooio": "BLOOIO_LIVE_TEST=1 vitest run test/blooio.integration.test.ts",
     "test:watch": "vitest",
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "publishConfig": {
     "access": "public"
+  },
+  "dependencies": {
+    "zod": "^4.4.3"
   }
 }

@@ -35,6 +35,19 @@ export class IMessageSDKError extends Error {
 
 export class ValidationError extends IMessageSDKError {}
 
+export class AuthenticationError extends IMessageSDKError {}
+
+export class NotFoundError extends IMessageSDKError {}
+
+export class ConflictError extends IMessageSDKError {}
+
+export class RateLimitError extends IMessageSDKError {}
+
+export class ProviderUnavailableError extends IMessageSDKError {}
+
+/** A send may have reached the provider, so blindly retrying could duplicate it. */
+export class AmbiguousDeliveryError extends IMessageSDKError {}
+
 export class UnsupportedCapabilityError extends IMessageSDKError {
   readonly capability: string;
 
@@ -71,4 +84,3 @@ export class ClientClosedError extends IMessageSDKError {
     });
   }
 }
-

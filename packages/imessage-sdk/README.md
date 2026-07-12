@@ -3,9 +3,7 @@
 A provider-neutral, type-safe TypeScript conversation layer for iMessage
 infrastructure.
 
-> The normalized v0.1 contracts and client are implemented. The Blooio factory
-> and its complete provider shape are in place, but its HTTP operation bodies
-> are still explicit `provider_not_implemented` placeholders.
+The normalized v0.1 client and Blooio v2 provider are implemented.
 
 The package is ESM-only and ships JavaScript plus TypeScript declarations.
 
@@ -40,8 +38,8 @@ namedClient.connectionId;
 //          ^? "main-line"
 ```
 
-`blooio()` may also be constructed without options while the adapter is being
-configured:
+`blooio()` can be constructed without options for dependency wiring and type
+tests, but API operations then throw a typed `AuthenticationError`.
 
 ```ts
 const client = createIMessageClient({
@@ -79,9 +77,9 @@ sent.connectionId;
 
 ## Attachments and replies
 
-Attachments declare what they contain independently from how their bytes are
-provided. Images, videos, and files can come from a URL, `Blob`, or
-`Uint8Array`:
+Attachments declare what they contain independently from transport. The core
+model accepts URLs, `Blob`, and `Uint8Array`; Blooio v2 currently accepts only
+public URLs:
 
 ```ts
 await client.messages.send({
@@ -98,15 +96,13 @@ await client.messages.send({
     },
     {
       kind: "video",
-      source: { type: "blob", data: videoBlob },
+      source: { type: "url", url: "https://example.com/clip.mp4" },
       filename: "clip.mp4",
-      contentType: "video/mp4",
     },
     {
       kind: "file",
-      source: { type: "bytes", data: pdfBytes },
+      source: { type: "url", url: "https://example.com/document.pdf" },
       filename: "document.pdf",
-      contentType: "application/pdf",
     },
   ],
 });
@@ -157,11 +153,16 @@ await client.messages.send({
 They add the connection ID to results, decorate events, verify capability
 support consistently, and produce normalized SDK errors.
 
-Provider-specific methods will also be defined directly on the provider:
+Provider-specific methods are defined directly on the provider. Blooio exposes
+its status endpoint without adding it to every adapter's normalized contract:
 
 ```ts
-// Once implemented by the Blooio adapter:
-await client.providers.blooio.getLineStatus();
+const status = await client.providers.blooio.messages.getStatus({
+  conversationId: sent.conversationId,
+  messageId: sent.providerMessageId,
+});
+
+const linkedNumbers = await client.providers.blooio.numbers.list();
 ```
 
 There is no separate `extensions` object.
@@ -171,7 +172,7 @@ There is no separate `extensions` object.
 `defineProvider()` is the generic adapter-authoring helper. It preserves the
 literal name, capability values, and complete concrete provider type.
 
-Conceptually, the Blooio implementation is structured like this:
+Conceptually, provider factories are structured like this:
 
 ```ts
 import { defineProvider } from "imessage-sdk";
@@ -182,33 +183,33 @@ function blooio(options = {}) {
     capabilities: BLOOIO_CAPABILITIES,
     messages: {
       async send(input) {
-        return blooioTransport.send(options, input);
+        return transport.send(options, input);
       },
     },
     conversations: {
       async open(input) {
-        return blooioTransport.openConversation(options, input);
+        return transport.openConversation(options, input);
       },
     },
     reactions: {
       async add(input) {
-        await blooioTransport.addReaction(options, input);
+        await transport.addReaction(options, input);
       },
       async remove(input) {
-        await blooioTransport.removeReaction(options, input);
+        await transport.removeReaction(options, input);
       },
     },
     typing: {
       async start(conversationId) {
-        await blooioTransport.startTyping(options, conversationId);
+        await transport.startTyping(options, conversationId);
       },
     },
     webhooks: {
       verify(request) {
-        return blooioTransport.verifyWebhook(options, request);
+        return transport.verifyWebhook(options, request);
       },
       parse(request) {
-        return blooioTransport.parseWebhook(options, request);
+        return transport.parseWebhook(options, request);
       },
     },
   });
@@ -244,9 +245,10 @@ customClient.provider;
 //           ^? "my-provider"
 
 // Required because this concrete provider defines it as required.
-await customClient.providers["my-provider"].messages.edit("message-id", {
-  text: "Corrected",
-});
+await customClient.providers["my-provider"].messages.edit(
+  { conversationId: "conversation-id", messageId: "message-id" },
+  { text: "Corrected" },
+);
 ```
 
 ## One provider per client
@@ -278,7 +280,13 @@ feature checks:
 
 ```ts
 if (client.capabilities.messages.edit) {
-  await client.messages.edit("provider-message-id", { text: "Corrected" });
+  await client.messages.edit(
+    {
+      conversationId: "provider-conversation-id",
+      messageId: "provider-message-id",
+    },
+    { text: "Corrected" },
+  );
 }
 ```
 
@@ -290,6 +298,53 @@ construction, while stream providers connect lazily when subscribed.
 
 `client.close()` is always available and idempotent. It is a no-op when the
 provider has no cleanup and releases resources for stream or local transports.
+
+## Blooio operations
+
+The v0.1 Blooio adapter supports text and public URL attachments, inline
+replies, direct and group chat identifiers, message lookup and status,
+reactions, typing start/stop, marking chats as read, and signed webhooks.
+
+```ts
+const locator = {
+  conversationId: sent.conversationId,
+  messageId: sent.providerMessageId,
+};
+
+await client.messages.get(locator);
+await client.reactions.add({ ...locator, reaction: "like" });
+await client.typing.start(sent.conversationId);
+await client.typing.stop(sent.conversationId);
+await client.conversations.markRead(sent.conversationId);
+```
+
+Webhook handling verifies `X-Blooio-Signature` before parsing and returns an
+array because one provider delivery can represent zero, one, or multiple
+normalized events:
+
+```ts
+const events = await client.webhooks.handle(request);
+```
+
+### Live integration test
+
+The live test sends real messages and is disabled during normal test runs.
+Set these environment variables locally:
+
+```bash
+export BLOOIO_API_KEY="..."
+export BLOOIO_TEST_RECIPIENT="+15551234567"
+export BLOOIO_FROM_NUMBER="+15557654321" # optional
+export BLOOIO_TEST_IMAGE_URL="https://..."
+export BLOOIO_TEST_VIDEO_URL="https://..."
+export BLOOIO_TEST_FILE_URL="https://..."
+
+pnpm --filter imessage-sdk test:integration:blooio
+```
+
+It sends three messages and exercises lookup/status, reactions, typing, and
+mark-read. Webhook verification and parsing are covered deterministically by
+the mocked test suite; a real inbound webhook requires a public test endpoint.
 
 ## v0.1 boundary
 

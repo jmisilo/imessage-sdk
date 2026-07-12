@@ -52,7 +52,8 @@ export interface ProviderTypingEvent<
   TType extends ProviderTypingEventType = ProviderTypingEventType,
 > extends ProviderEventBase<TType> {
   readonly conversationId: string;
-  readonly actor: IMessageAddress;
+  /** Some group transports do not identify which participant is typing. */
+  readonly actor?: IMessageAddress;
 }
 
 export type ProviderEvent =
@@ -104,7 +105,7 @@ export interface IMessageTypingEvent<
   TType extends ProviderTypingEventType = ProviderTypingEventType,
 > extends IMessageEventBase<TProvider, TConnectionId, TType> {
   readonly conversationId: string;
-  readonly actor: IMessageAddress;
+  readonly actor?: IMessageAddress;
 }
 
 export type IMessageEvent<
@@ -115,4 +116,3 @@ export type IMessageEvent<
   | IMessageDeletedEvent<TProvider, TConnectionId>
   | IMessageReactionEvent<TProvider, TConnectionId>
   | IMessageTypingEvent<TProvider, TConnectionId>;
-
