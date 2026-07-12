@@ -1,6 +1,11 @@
 export type { IMessageCapabilities } from "./core/capabilities.js";
 
 export {
+  createFallbackConversationId,
+  isFallbackConversationId,
+} from "./core/conversation-id.js";
+
+export {
   AmbiguousDeliveryError,
   AuthenticationError,
   ClientClosedError,
@@ -33,7 +38,10 @@ export type {
   ProviderTypingEventType,
 } from "./core/events.js";
 
-export { createIMessageClient } from "./core/client.js";
+export {
+  createIMessageClient,
+  DEFAULT_CONNECTION_ID,
+} from "./core/client.js";
 export type {
   ClientProvider,
   ClientProviders,

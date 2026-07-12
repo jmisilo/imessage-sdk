@@ -8,6 +8,15 @@ implemented.
 
 The package is ESM-only and ships JavaScript plus TypeScript declarations.
 
+> This is a beta release. Install the prerelease with `pnpm add
+> imessage-sdk@beta` while the public API is being validated.
+
+## Install
+
+```bash
+pnpm add imessage-sdk@beta
+```
+
 ## Creating a client
 
 Provider factories consume provider configuration and return a complete,
@@ -38,8 +47,9 @@ namedClient.connectionId;
 //          ^? "main-line"
 ```
 
-`blooio()` can be constructed without options for dependency wiring and type
-tests, but API operations then throw a typed `AuthenticationError`.
+`blooio()` can be constructed without explicit options for dependency wiring
+and type tests. If neither options nor environment credentials are available,
+API operations throw a typed `AuthenticationError`.
 
 ```ts
 const client = createIMessageClient({
@@ -272,6 +282,23 @@ A multi-provider client would require explicit routing, sender ownership,
 idempotency, failure, and fallback policies. If needed later, that should be a
 separate router layered over multiple single-provider clients.
 
+## Conversation IDs
+
+Provider-native conversation IDs are required for provider operations and must
+be treated as opaque values scoped by `provider` and `connectionId`.
+
+If a provider message unexpectedly omits its native conversation ID, the SDK
+creates a diagnostic fallback from the provider message ID and timestamp:
+
+```text
+imsg-sdk-v1-<base64url-json>
+```
+
+Fallback IDs keep normalized inbound messages structurally valid, but they are
+not routable provider conversation handles. Passing one to send, lookup,
+reaction, typing, or read operations throws a `ValidationError` with code
+`non_routable_conversation_id`.
+
 ## Capabilities and lifecycle
 
 The public client keeps a consistent normalized method set. Unsupported
@@ -302,8 +329,9 @@ provider has no cleanup and releases resources for stream or local transports.
 ## Blooio operations
 
 The v0.1 Blooio adapter supports text and public URL attachments, inline
-replies, direct and group chat identifiers, message lookup and status,
-reactions, typing start/stop, marking chats as read, and signed webhooks.
+replies, direct conversations, message lookup and status, reactions, typing
+start/stop, marking chats as read, and signed webhooks. Group conversations are
+experimental at the provider level and disabled in the normalized client.
 
 ```ts
 const locator = {
@@ -368,24 +396,28 @@ const line = await client.providers.photon.connection.getLine();
 the environment.
 
 The provider renews temporary line credentials internally and supports direct
-and group chats, all attachment source types, replies, lookup, reactions,
-typing, mark-read, signed Spectrum webhooks, and durable event streams.
-Normalized editing and deletion are conservatively disabled in v0.1 because
-Photon Cloud's native mutation RPCs did not pass live verification. The
-provider implementations are retained for future verification, but the
-corresponding capabilities are `false` and normalized calls throw
+chats, all attachment source types, replies, lookup, reactions, typing,
+mark-read, and signed Spectrum webhooks. Normalized editing, deletion, group
+conversations, and event streaming are conservatively disabled in v0.1. Their
+capabilities are `false`, and normalized calls throw
 `UnsupportedCapabilityError`.
 
-Photon cursors are durable numeric event sequences represented as strings in
-the provider-neutral API:
+Photon streaming remains available as an experimental provider-level API.
+Cursors are durable numeric event sequences represented as strings:
 
 ```ts
-for await (const event of client.events.subscribe({ cursor: "123" })) {
+for await (const event of client.providers.photon.events.subscribe({
+  cursor: "123",
+})) {
   console.log(event.providerEventId, event.type);
 }
 
 await client.close();
 ```
+
+Group-conversation implementations also remain experimental at the provider
+level. Normalized `client.conversations.open(...)` accepts one participant in
+v0.1 and rejects multiple participants with `UnsupportedCapabilityError`.
 
 ### Photon live integration test
 
@@ -397,7 +429,6 @@ export PHOTON_TEST_RECIPIENT="+15551234567"
 export PHOTON_TEST_IMAGE_URL="https://..."
 export PHOTON_TEST_VIDEO_URL="https://..."
 export PHOTON_TEST_FILE_URL="https://..."
-export PHOTON_TEST_GROUP_RECIPIENT="+15559876543" # optional
 
 pnpm --filter imessage-sdk test:integration:photon
 ```
@@ -408,19 +439,27 @@ have sent enough inbound messages, so use an opted-in recipient and avoid
 repeated live runs against a fresh contact.
 
 The outbound test exercises line discovery, idempotency, attachments, replies,
-lookup, reactions, typing, mark-read, and cleanup. To test the real persistent
-stream, run the command below and send an iMessage to the line within 60
-seconds:
+lookup, reactions, typing, mark-read, and cleanup. To test the experimental
+persistent stream, run the command below and send an iMessage to the line
+within 60 seconds:
 
 ```bash
 pnpm --filter imessage-sdk test:integration:photon-stream
 ```
 
-## v0.1 boundary
+## v0.1 beta boundary
 
 The initial model includes text, URL/blob/byte attachments, thread replies,
-conversations, statuses, reactions, typing, webhooks, streams, typed
-capabilities, and typed errors.
+direct conversations, statuses, reactions, typing, webhooks, typed
+capabilities, and typed errors. Photon streams and both providers' group
+implementations remain experimental provider-level APIs.
 
 It intentionally excludes FaceTime, polls, location sharing, contacts, message
 effects, scheduling, provisioning, and automatic provider fallback.
+
+## License
+
+MIT
+
+Release history is tracked in the repository
+[changelog](https://github.com/jmisilo/imessage-sdk/blob/main/CHANGELOG.md).

@@ -107,7 +107,8 @@ export type IMessageStatus =
  */
 export interface ProviderMessage {
   readonly providerMessageId: string;
-  readonly conversationId: string;
+  /** Opaque provider-native ID, scoped to one provider connection. */
+  readonly conversationId?: string;
   readonly direction: IMessageDirection;
   readonly sender: IMessageAddress;
   readonly recipients: readonly IMessageAddress[];
@@ -132,9 +133,11 @@ export type ProviderSentMessage = ProviderMessage & {
 export type Message<
   TProvider extends IMessageProviderName = IMessageProviderName,
   TConnectionId extends string = string,
-> = ProviderMessage & {
+> = Omit<ProviderMessage, "conversationId"> & {
   /** Equal to providerMessageId in v0.1. */
   readonly id: string;
+  /** Provider-native when available; otherwise a non-routable imsg-sdk-v1 fallback. */
+  readonly conversationId: string;
   readonly provider: TProvider;
   readonly connectionId: TConnectionId;
 };
@@ -151,6 +154,7 @@ export interface OpenConversationInput {
 }
 
 export interface ProviderConversation {
+  /** Opaque provider-native ID, scoped to one provider connection. */
   readonly providerConversationId: string;
   readonly participants: readonly IMessageAddress[];
   readonly createdAt?: Date;
@@ -161,7 +165,7 @@ export type Conversation<
   TProvider extends IMessageProviderName = IMessageProviderName,
   TConnectionId extends string = string,
 > = ProviderConversation & {
-  /** Equal to providerConversationId in v0.1. */
+  /** Equal to providerConversationId in v0.1; scope with provider and connectionId. */
   readonly id: string;
   readonly provider: TProvider;
   readonly connectionId: TConnectionId;

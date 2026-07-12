@@ -1,9 +1,16 @@
 {
   "name": "imessage-sdk-monorepo",
   "author": "jmisilo",
-  "version": "0.1.0",
   "private": true,
   "description": "Provider-neutral TypeScript SDK workspace for iMessage infrastructure",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jmisilo/imessage-sdk.git"
+  },
+  "homepage": "https://github.com/jmisilo/imessage-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/jmisilo/imessage-sdk/issues"
+  },
   "license": "MIT",
   "type": "module",
   "packageManager": "pnpm@10.18.3",

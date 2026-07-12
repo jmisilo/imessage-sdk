@@ -78,22 +78,6 @@ describe.skipIf(!enabled)("Photon Cloud live API", () => {
         idempotencyKey: `imessage-sdk-photon-${run}-attachments`,
       });
 
-      const groupRecipient = process.env["PHOTON_TEST_GROUP_RECIPIENT"];
-      if (groupRecipient !== undefined) {
-        const group = await client.conversations.open({
-          participants: [
-            toAddress(recipientValue),
-            toAddress(groupRecipient),
-          ],
-        });
-        const groupMessage = await client.messages.send({
-          conversationId: group.id,
-          text: `imessage-sdk Photon group test ${run}`,
-          idempotencyKey: `imessage-sdk-photon-${run}-group`,
-        });
-        expect(groupMessage.providerMessageId).toBeTruthy();
-      }
-
       expect(text.providerMessageId).toBeTruthy();
       expect(attachment.attachments).toHaveLength(3);
       expect(attachment.replyTo?.messageId).toBe(text.providerMessageId);
@@ -109,15 +93,12 @@ describe.skipIf(!streamEnabled)("Photon Cloud live stream", () => {
   it("receives one real Photon event", async () => {
     required("PHOTON_PROJECT_ID");
     required("PHOTON_PROJECT_SECRET");
-    const client = createIMessageClient({
-      connectionId: "photon-cloud-stream",
-      provider: photon(),
-    });
+    const provider = photon();
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 60_000);
 
     try {
-      const events = client.events.subscribe({ signal: controller.signal });
+      const events = provider.events.subscribe({ signal: controller.signal });
       const iterator = events[Symbol.asyncIterator]();
       const result = await iterator.next();
       if (result.done === true) {
@@ -125,12 +106,11 @@ describe.skipIf(!streamEnabled)("Photon Cloud live stream", () => {
           "No Photon event arrived within 60 seconds. Send an iMessage to the configured line while this test is running.",
         );
       }
-      expect(result.value.provider).toBe("photon");
       expect(result.value.providerEventId).toBeTruthy();
     } finally {
       clearTimeout(timeout);
       controller.abort();
-      await client.close();
+      await provider.close?.();
     }
   }, 90_000);
 });
