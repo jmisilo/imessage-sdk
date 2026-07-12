@@ -108,7 +108,7 @@ function createTestProvider() {
 
 describe("generic client", () => {
   it("infers the concrete provider returned by the Blooio factory", async () => {
-    const provider = blooio();
+    const provider = blooio({ apiKey: "" });
     const client = createIMessageClient({ provider });
 
     expectTypeOf(provider.name).toEqualTypeOf<"blooio">();

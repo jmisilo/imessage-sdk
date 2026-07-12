@@ -457,14 +457,27 @@ function mapWebhookEvent(raw: JsonObject): ProviderEvent | undefined {
 
 /** Creates a Blooio v2 provider. No initialization call is required. */
 export function blooio(options: BlooioOptions = {}): BlooioProvider {
-  const baseUrl = (options.baseUrl ?? DEFAULT_BASE_URL).replace(/\/$/, "");
+  const apiKey = options.apiKey ?? process.env["BLOOIO_API_KEY"];
+  const webhookSecret =
+    options.webhookSecret ?? process.env["BLOOIO_WEBHOOK_SECRET"];
+  const configuredSender = process.env["BLOOIO_FROM_NUMBER"];
+  const sender =
+    options.sender ??
+    (configuredSender === undefined ? undefined : address(configuredSender));
+  const config: BlooioOptions = {
+    ...options,
+    ...(apiKey === undefined ? {} : { apiKey }),
+    ...(webhookSecret === undefined ? {} : { webhookSecret }),
+    ...(sender === undefined ? {} : { sender }),
+  };
+  const baseUrl = (config.baseUrl ?? DEFAULT_BASE_URL).replace(/\/$/, "");
 
   const request = async <T>(
     path: string,
     init: RequestInit = {},
     requestOptions: { readonly send?: boolean; readonly notFoundNull?: boolean } = {},
   ): Promise<T | null> => {
-    if (options.apiKey === undefined || options.apiKey.length === 0) {
+    if (config.apiKey === undefined || config.apiKey.length === 0) {
       throw new AuthenticationError("A Blooio API key is required.", {
         provider: "blooio",
         code: "missing_api_key",
@@ -476,7 +489,7 @@ export function blooio(options: BlooioOptions = {}): BlooioProvider {
       response = await fetch(`${baseUrl}${path}`, {
         ...init,
         headers: {
-          authorization: `Bearer ${options.apiKey}`,
+          authorization: `Bearer ${config.apiKey}`,
           accept: "application/json",
           ...(init.body === undefined ? {} : { "content-type": "application/json" }),
           ...init.headers,
@@ -577,9 +590,9 @@ export function blooio(options: BlooioOptions = {}): BlooioProvider {
         ...(attachments === undefined || attachments.length === 0
           ? {}
           : { attachments }),
-        ...(options.sender === undefined
+        ...(config.sender === undefined
           ? {}
-          : { from_number: options.sender.value }),
+          : { from_number: config.sender.value }),
         ...(input.replyTo === undefined
           ? {}
           : {
@@ -626,7 +639,7 @@ export function blooio(options: BlooioOptions = {}): BlooioProvider {
         providerMessageId,
         conversationId: actualConversationId,
         direction: "outbound",
-        sender: options.sender ?? address("unknown"),
+        sender: config.sender ?? address("unknown"),
         recipients,
         text: input.text ?? "",
         attachments:
@@ -664,7 +677,7 @@ export function blooio(options: BlooioOptions = {}): BlooioProvider {
       );
       return raw === null
         ? null
-        : mapProviderMessage(raw, message.conversationId, options.sender);
+        : mapProviderMessage(raw, message.conversationId, config.sender);
     },
 
     async getStatus(message) {
@@ -789,7 +802,7 @@ export function blooio(options: BlooioOptions = {}): BlooioProvider {
     },
     webhooks: {
       async verify(webhookRequest) {
-        if (options.webhookSecret === undefined) return false;
+        if (config.webhookSecret === undefined) return false;
         const header = webhookRequest.headers.get("x-blooio-signature");
         if (header === null) return false;
         const parsed = parseSignature(header);
@@ -800,7 +813,7 @@ export function blooio(options: BlooioOptions = {}): BlooioProvider {
         if (age > DEFAULT_WEBHOOK_TOLERANCE_SECONDS) return false;
         const rawBody = await webhookRequest.text();
         const expected = await hmacSha256(
-          options.webhookSecret,
+          config.webhookSecret,
           `${parsed.timestamp}.${rawBody}`,
         );
         return parsed.signatures.some((signature) =>

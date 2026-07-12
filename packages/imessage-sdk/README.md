@@ -3,7 +3,8 @@
 A provider-neutral, type-safe TypeScript conversation layer for iMessage
 infrastructure.
 
-The normalized v0.1 client and Blooio v2 provider are implemented.
+The normalized v0.1 client, Blooio v2 provider, and Photon Cloud provider are
+implemented.
 
 The package is ESM-only and ships JavaScript plus TypeScript declarations.
 
@@ -17,13 +18,12 @@ import { createIMessageClient } from "imessage-sdk";
 import { blooio } from "imessage-sdk/providers/blooio";
 
 const client = createIMessageClient({
-  provider: blooio({
-    apiKey: process.env.BLOOIO_API_KEY,
-    sender: { kind: "phone", value: "+15550000000" },
-    webhookSecret: process.env.BLOOIO_WEBHOOK_SECRET,
-  }),
+  provider: blooio(),
 });
 ```
+
+Provider options override environment defaults. `blooio()` reads
+`BLOOIO_API_KEY`, `BLOOIO_FROM_NUMBER`, and `BLOOIO_WEBHOOK_SECRET`.
 
 `connectionId` is optional and defaults to the literal `"default"`. Supply one
 when the application has multiple connections or sender lines:
@@ -79,7 +79,7 @@ sent.connectionId;
 
 Attachments declare what they contain independently from transport. The core
 model accepts URLs, `Blob`, and `Uint8Array`; Blooio v2 currently accepts only
-public URLs:
+public URLs, while Photon uploads all three source types:
 
 ```ts
 await client.messages.send({
@@ -345,6 +345,76 @@ pnpm --filter imessage-sdk test:integration:blooio
 It sends three messages and exercises lookup/status, reactions, typing, and
 mark-read. Webhook verification and parsing are covered deterministically by
 the mocked test suite; a real inbound webhook requires a public test endpoint.
+
+## Photon Cloud operations
+
+Photon authenticates with Spectrum Cloud lazily. A dedicated phone is optional
+when the project owns exactly one line and required when it owns multiple:
+
+```ts
+import { createIMessageClient } from "imessage-sdk";
+import { photon } from "imessage-sdk/providers/photon";
+
+const client = createIMessageClient({
+  connectionId: "photon-main",
+  provider: photon(),
+});
+
+const line = await client.providers.photon.connection.getLine();
+```
+
+`photon()` reads `PHOTON_PROJECT_ID`, `PHOTON_PROJECT_SECRET`,
+`PHOTON_PHONE_NUMBER`, and `PHOTON_WEBHOOK_SECRET`. Explicit options override
+the environment.
+
+The provider renews temporary line credentials internally and supports direct
+and group chats, all attachment source types, replies, lookup, reactions,
+typing, mark-read, signed Spectrum webhooks, and durable event streams.
+Normalized editing and deletion are conservatively disabled in v0.1 because
+Photon Cloud's native mutation RPCs did not pass live verification. The
+provider implementations are retained for future verification, but the
+corresponding capabilities are `false` and normalized calls throw
+`UnsupportedCapabilityError`.
+
+Photon cursors are durable numeric event sequences represented as strings in
+the provider-neutral API:
+
+```ts
+for await (const event of client.events.subscribe({ cursor: "123" })) {
+  console.log(event.providerEventId, event.type);
+}
+
+await client.close();
+```
+
+### Photon live integration test
+
+```bash
+export PHOTON_PROJECT_ID="..."
+export PHOTON_PROJECT_SECRET="..."
+export PHOTON_PHONE_NUMBER="+15557654321" # optional with one line
+export PHOTON_TEST_RECIPIENT="+15551234567"
+export PHOTON_TEST_IMAGE_URL="https://..."
+export PHOTON_TEST_VIDEO_URL="https://..."
+export PHOTON_TEST_FILE_URL="https://..."
+export PHOTON_TEST_GROUP_RECIPIENT="+15559876543" # optional
+
+pnpm --filter imessage-sdk test:integration:photon
+```
+
+On Photon Free and Pro shared lines, add the recipient under the project's
+**Users** tab first. New contacts have a temporary reply allowance until they
+have sent enough inbound messages, so use an opted-in recipient and avoid
+repeated live runs against a fresh contact.
+
+The outbound test exercises line discovery, idempotency, attachments, replies,
+lookup, reactions, typing, mark-read, and cleanup. To test the real persistent
+stream, run the command below and send an iMessage to the line within 60
+seconds:
+
+```bash
+pnpm --filter imessage-sdk test:integration:photon-stream
+```
 
 ## v0.1 boundary
 
