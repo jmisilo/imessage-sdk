@@ -8,6 +8,7 @@ const recipient = { kind: "phone", value: "+15551111111" } as const;
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
   vi.useRealTimers();
 });
 
@@ -38,6 +39,28 @@ async function signature(secret: string, timestamp: number, body: string) {
 }
 
 describe("Blooio provider", () => {
+  it("reads credentials and sender defaults from the environment", async () => {
+    vi.stubEnv("BLOOIO_API_KEY", "environment-key");
+    vi.stubEnv("BLOOIO_FROM_NUMBER", sender.value);
+    const fetchMock = vi.fn(async () =>
+      jsonResponse({ message_id: "msg_env", status: "queued" }, 202),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const client = createIMessageClient({ provider: blooio() });
+
+    await client.messages.send({ to: recipient, text: "Environment" });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          authorization: "Bearer environment-key",
+        }),
+        body: expect.stringContaining(`"from_number":"${sender.value}"`),
+      }),
+    );
+  });
+
   it("sends text, public attachments, replies, and idempotency keys", async () => {
     const fetchMock = vi.fn(
       async (input: RequestInfo | URL, init?: RequestInit) => {

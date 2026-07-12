@@ -2,9 +2,10 @@
 
 A provider-neutral TypeScript conversation layer for iMessage infrastructure.
 
-The first package is [`imessage-sdk`](./packages/imessage-sdk), with a working
-Blooio v2 provider and public contracts for additional providers. The Chat SDK
-adapter will be added after the normalized public API is stable.
+The first package is [`imessage-sdk`](./packages/imessage-sdk), with working
+Blooio v2 and Photon Cloud providers plus public contracts for additional
+providers. The Chat SDK adapter will be added after the normalized public API
+is stable.
 
 ## Requirements
 

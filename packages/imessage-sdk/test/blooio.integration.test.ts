@@ -84,6 +84,7 @@ describe.skipIf(!enabled)("Blooio live API", () => {
     const status = await client.providers.blooio.messages.getStatus(locator);
     const foundConversation = await client.conversations.get(conversation.id);
     await client.typing.start(conversation.id);
+    await new Promise<void>((resolve) => setTimeout(resolve, 2_000));
     await client.typing.stop(conversation.id);
     await client.reactions.add({ ...locator, reaction: "like" });
     await client.reactions.remove({ ...locator, reaction: "like" });
