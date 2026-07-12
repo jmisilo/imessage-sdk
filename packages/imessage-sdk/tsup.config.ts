@@ -3,9 +3,8 @@ import { defineConfig } from "tsup";
 export default defineConfig({
   entry: {
     index: "src/index.ts",
-    blooio: "src/blooio.ts",
-    photon: "src/photon.ts",
-    sendblue: "src/sendblue.ts",
+    "providers/blooio": "src/providers/blooio.ts",
+    "providers/photon": "src/providers/photon.ts",
   },
   format: ["esm"],
   target: "es2022",
@@ -16,4 +15,3 @@ export default defineConfig({
   splitting: false,
   treeshake: true,
 });
-
