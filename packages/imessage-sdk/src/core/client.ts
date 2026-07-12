@@ -4,6 +4,10 @@ import {
   ValidationError,
   WebhookVerificationError,
 } from "./errors.js";
+import {
+  createFallbackConversationId,
+  isFallbackConversationId,
+} from "./conversation-id.js";
 import type { IMessageEvent, ProviderEvent } from "./events.js";
 import type { AnyIMessageProvider } from "./provider.js";
 import type {
@@ -23,6 +27,8 @@ import type {
 } from "./types.js";
 
 type ProviderNameOf<TProvider extends AnyIMessageProvider> = TProvider["name"];
+
+export const DEFAULT_CONNECTION_ID = "default" as const;
 
 export type ClientProvider<TProvider extends AnyIMessageProvider> = TProvider;
 
@@ -94,7 +100,7 @@ export interface IMessageClient<
 
 export interface CreateIMessageClientOptions<
   TProvider extends AnyIMessageProvider,
-  TConnectionId extends string = "default",
+  TConnectionId extends string = typeof DEFAULT_CONNECTION_ID,
 > {
   readonly connectionId?: TConnectionId;
   readonly provider: TProvider;
@@ -149,6 +155,12 @@ function decorateMessage<
   return {
     ...message,
     id: message.providerMessageId,
+    conversationId:
+      message.conversationId ??
+      createFallbackConversationId(
+        message.providerMessageId,
+        message.createdAt,
+      ),
     provider,
     connectionId,
   };
@@ -219,12 +231,13 @@ function mapEvents<
 
 export function createIMessageClient<
   const TProvider extends AnyIMessageProvider,
-  const TConnectionId extends string = "default",
+  const TConnectionId extends string = typeof DEFAULT_CONNECTION_ID,
 >(
   options: CreateIMessageClientOptions<TProvider, TConnectionId>,
 ): IMessageClient<TProvider, TConnectionId> {
   const { provider } = options;
-  const connectionId = (options.connectionId ?? "default") as TConnectionId;
+  const connectionId = (options.connectionId ??
+    DEFAULT_CONNECTION_ID) as TConnectionId;
 
   if (connectionId.trim().length === 0) {
     throw new ValidationError("connectionId must not be empty.", {
@@ -253,6 +266,15 @@ export function createIMessageClient<
     throw new UnsupportedCapabilityError(capability, errorContext);
   };
 
+  const assertRoutableConversationId = (conversationId: string): void => {
+    if (isFallbackConversationId(conversationId)) {
+      throw new ValidationError(
+        "SDK fallback conversation IDs are diagnostic and cannot be used for provider operations.",
+        { ...errorContext, code: "non_routable_conversation_id" },
+      );
+    }
+  };
+
   const requireImplementation = <T>(
     implementation: T | undefined,
     capability: string,
@@ -276,6 +298,10 @@ export function createIMessageClient<
     messages: {
       async send(input) {
         assertOpen();
+
+        if (input.conversationId !== undefined) {
+          assertRoutableConversationId(input.conversationId);
+        }
 
         if (input.text !== undefined && !provider.capabilities.messages.text) {
           unsupported("messages.text");
@@ -317,6 +343,7 @@ export function createIMessageClient<
       },
       async get(message) {
         assertOpen();
+        assertRoutableConversationId(message.conversationId);
 
         if (!provider.capabilities.messages.get) {
           unsupported("messages.get");
@@ -334,6 +361,7 @@ export function createIMessageClient<
       },
       async edit(message, input) {
         assertOpen();
+        assertRoutableConversationId(message.conversationId);
 
         if (!provider.capabilities.messages.edit) {
           unsupported("messages.edit");
@@ -349,6 +377,7 @@ export function createIMessageClient<
       },
       async delete(message) {
         assertOpen();
+        assertRoutableConversationId(message.conversationId);
 
         if (!provider.capabilities.messages.delete) {
           unsupported("messages.delete");
@@ -384,6 +413,7 @@ export function createIMessageClient<
       },
       async get(conversationId) {
         assertOpen();
+        assertRoutableConversationId(conversationId);
 
         if (!provider.capabilities.conversations.get) {
           unsupported("conversations.get");
@@ -404,6 +434,7 @@ export function createIMessageClient<
       },
       async markRead(conversationId) {
         assertOpen();
+        assertRoutableConversationId(conversationId);
 
         if (!provider.capabilities.conversations.markRead) {
           unsupported("conversations.markRead");
@@ -419,6 +450,7 @@ export function createIMessageClient<
     reactions: {
       async add(input) {
         assertOpen();
+        assertRoutableConversationId(input.conversationId);
 
         if (!provider.capabilities.interactions.reactions) {
           unsupported("reactions.add");
@@ -433,6 +465,7 @@ export function createIMessageClient<
       },
       async remove(input) {
         assertOpen();
+        assertRoutableConversationId(input.conversationId);
 
         if (!provider.capabilities.interactions.reactions) {
           unsupported("reactions.remove");
@@ -449,6 +482,7 @@ export function createIMessageClient<
     typing: {
       async start(conversationId) {
         assertOpen();
+        assertRoutableConversationId(conversationId);
 
         if (!provider.capabilities.interactions.typingStart) {
           unsupported("typing.start");
@@ -460,6 +494,7 @@ export function createIMessageClient<
       },
       async stop(conversationId) {
         assertOpen();
+        assertRoutableConversationId(conversationId);
 
         if (!provider.capabilities.interactions.typingStop) {
           unsupported("typing.stop");

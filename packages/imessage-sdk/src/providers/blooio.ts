@@ -47,7 +47,7 @@ export const BLOOIO_CAPABILITIES = {
   },
   conversations: {
     direct: true,
-    groups: true,
+    groups: false,
     get: true,
     markRead: true,
   },

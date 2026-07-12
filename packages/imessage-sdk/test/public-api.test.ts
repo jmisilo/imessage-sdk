@@ -2,8 +2,10 @@ import { describe, expect, expectTypeOf, it, vi } from "vitest";
 
 import {
   ClientClosedError,
+  createFallbackConversationId,
   createIMessageClient,
   defineProvider,
+  isFallbackConversationId,
   UnsupportedCapabilityError,
 } from "../src/index.js";
 import type {
@@ -107,6 +109,42 @@ function createTestProvider() {
 }
 
 describe("generic client", () => {
+  it("creates a diagnostic fallback when a provider message omits conversationId", async () => {
+    const { provider: baseProvider } = createTestProvider();
+    const provider = defineProvider({
+      ...baseProvider,
+      name: "fallback-provider" as const,
+      messages: {
+        ...baseProvider.messages,
+        async send() {
+          const withoutConversation = { ...createProviderMessage() };
+          delete withoutConversation.conversationId;
+          return withoutConversation;
+        },
+      },
+    });
+    const client = createIMessageClient({ provider });
+
+    const message = await client.messages.send({ to: recipient, text: "Hello" });
+
+    expect(message.conversationId).toBe(
+      createFallbackConversationId(
+        message.providerMessageId,
+        message.createdAt,
+      ),
+    );
+    expect(isFallbackConversationId(message.conversationId)).toBe(true);
+    await expect(
+      client.messages.send({
+        conversationId: message.conversationId,
+        text: "Cannot route this",
+      }),
+    ).rejects.toMatchObject({
+      name: "ValidationError",
+      code: "non_routable_conversation_id",
+    });
+  });
+
   it("infers the concrete provider returned by the Blooio factory", async () => {
     const provider = blooio({ apiKey: "" });
     const client = createIMessageClient({ provider });

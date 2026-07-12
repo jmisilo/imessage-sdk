@@ -74,7 +74,7 @@ export const PHOTON_CAPABILITIES = {
   },
   conversations: {
     direct: true,
-    groups: true,
+    groups: false,
     get: true,
     markRead: true,
   },
@@ -86,7 +86,7 @@ export const PHOTON_CAPABILITIES = {
   },
   events: {
     webhooks: true,
-    stream: true,
+    stream: false,
   },
 } as const;
 
@@ -110,13 +110,9 @@ export interface PhotonConnection {
   getLine(): Promise<PhotonLine>;
 }
 
-export interface PhotonMessages extends ProviderMessages {
+export interface PhotonMessages
+  extends Omit<ProviderMessages, "edit" | "delete"> {
   get(message: MessageLocator): Promise<ProviderMessage | null>;
-  edit(
-    message: MessageLocator,
-    input: { readonly text: string },
-  ): Promise<ProviderMessage>;
-  delete(message: MessageLocator): Promise<void>;
 }
 
 export interface PhotonConversations extends ProviderConversations {
@@ -928,25 +924,6 @@ export function photon(options: PhotonOptions = {}): PhotonProvider {
       }
     },
 
-    async edit(message, input) {
-      return run("messages.edit", async ({ client }) =>
-        mapMessage(
-          client,
-          await client.messages.edit(
-            message.conversationId,
-            message.messageId,
-            input.text,
-          ),
-          message.conversationId,
-        ),
-      );
-    },
-
-    async delete(message) {
-      await run("messages.delete", async ({ client }) => {
-        await client.messages.unsend(message.conversationId, message.messageId);
-      });
-    },
   };
 
   const conversations: PhotonConversations = {

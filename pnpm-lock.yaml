@@ -30,6 +30,12 @@ importers:
         specifier: ^4.1.10
         version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@20.19.43)(vite@8.1.4(@types/node@20.19.43)(esbuild@0.27.7))
 
+  packages/chat-adapter: {}
+
+  packages/cli: {}
+
+  packages/eve-channel: {}
+
   packages/imessage-sdk:
     dependencies:
       '@photon-ai/advanced-imessage':

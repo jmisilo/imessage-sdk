@@ -1,7 +1,25 @@
 {
   "name": "imessage-sdk",
-  "version": "0.0.0",
+  "version": "0.1.0-beta.0",
   "description": "Provider-neutral TypeScript SDK for iMessage infrastructure",
+  "author": "jmisilo",
+  "keywords": [
+    "imessage",
+    "messaging",
+    "sdk",
+    "typescript",
+    "blooio",
+    "photon"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jmisilo/imessage-sdk.git",
+    "directory": "packages/imessage-sdk"
+  },
+  "homepage": "https://github.com/jmisilo/imessage-sdk/tree/main/packages/imessage-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/jmisilo/imessage-sdk/issues"
+  },
   "license": "MIT",
   "type": "module",
   "sideEffects": false,
@@ -45,7 +63,8 @@
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "provenance": true
   },
   "dependencies": {
     "@photon-ai/advanced-imessage": "^1.0.0",

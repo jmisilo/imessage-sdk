@@ -89,13 +89,6 @@ function mockPhotonClient() {
   const sendAttachment = vi.fn(async () => photonMessage());
   const sendMultipart = vi.fn(async () => photonMessage());
   const getMessage = vi.fn(async () => photonMessage());
-  const edit = vi.fn(async (_chat: string, _message: string, text: string) =>
-    photonMessage({
-      content: { attachments: [], formatting: [], mentions: [], text },
-      dateEdited: new Date("2026-01-01T00:01:00.000Z"),
-    }),
-  );
-  const unsend = vi.fn(async () => undefined);
   const setReaction = vi.fn(async () => photonMessage());
   const upload = vi.fn(async (input: { fileName: string; data: Uint8Array }) => ({
     attachment: {
@@ -126,14 +119,12 @@ function mockPhotonClient() {
       setTyping,
     },
     messages: {
-      edit,
       get: getMessage,
       sendAttachment,
       sendMultipart,
       sendText,
       setReaction,
       subscribeEvents,
-      unsend,
     },
     events: { catchUp },
     close,
@@ -144,7 +135,6 @@ function mockPhotonClient() {
     client,
     close,
     createChat,
-    edit,
     getChat,
     getMessage,
     markRead,
@@ -154,7 +144,6 @@ function mockPhotonClient() {
     setReaction,
     setTyping,
     subscribeEvents,
-    unsend,
     upload,
   };
 }
@@ -283,16 +272,15 @@ describe("Photon provider", () => {
   });
 
   it("maps an unknown Photon server failure as retryable unavailability", async () => {
-    sdk.edit.mockRejectedValueOnce(new Error("Unknown server error occurred"));
+    sdk.createChat.mockRejectedValueOnce(new Error("Unknown server error occurred"));
     const client = createIMessageClient({
       provider: photon({ projectId: "project", projectSecret: "secret" }),
     });
 
     await expect(
-      client.providers.photon.messages.edit(
-        { conversationId: chat.guid, messageId: "photon-message-1" },
-        { text: "Corrected" },
-      ),
+      client.conversations.open({
+        participants: [{ kind: "phone", value: recipientPhone }],
+      }),
     ).rejects.toMatchObject({
       name: "ProviderUnavailableError",
       code: "photon_server_error",
@@ -300,13 +288,15 @@ describe("Photon provider", () => {
     });
   });
 
-  it("keeps normalized Photon native mutations disabled until Cloud support is verified", async () => {
+  it("keeps experimental Photon capabilities disabled in v0.1", async () => {
     const client = createIMessageClient({
       provider: photon({ projectId: "project", projectSecret: "secret" }),
     });
 
     expect(client.capabilities.messages.edit).toBe(false);
     expect(client.capabilities.messages.delete).toBe(false);
+    expect(client.capabilities.conversations.groups).toBe(false);
+    expect(client.capabilities.events.stream).toBe(false);
     await expect(
       client.messages.edit(
         { conversationId: chat.guid, messageId: "photon-message-1" },
@@ -327,8 +317,23 @@ describe("Photon provider", () => {
       code: "unsupported_capability",
       capability: "messages.delete",
     });
-    expect(sdk.edit).not.toHaveBeenCalled();
-    expect(sdk.unsend).not.toHaveBeenCalled();
+    await expect(
+      client.conversations.open({
+        participants: [
+          { kind: "phone", value: recipientPhone },
+          { kind: "phone", value: "+15552222222" },
+        ],
+      }),
+    ).rejects.toMatchObject({
+      name: "UnsupportedCapabilityError",
+      capability: "conversations.groups",
+    });
+    expect(() => client.events.subscribe()).toThrow(
+      expect.objectContaining({
+        name: "UnsupportedCapabilityError",
+        capability: "events.subscribe",
+      }),
+    );
   });
 
   it("sends text, uploads byte attachments, and maps native results", async () => {
@@ -390,7 +395,7 @@ describe("Photon provider", () => {
     expect(attachment.provider).toBe("photon");
   });
 
-  it("maps conversations, edit, unsend, reactions, typing, and mark-read", async () => {
+  it("maps conversations, reactions, typing, and mark-read", async () => {
     const client = createIMessageClient({
       provider: photon({ projectId: "project", projectSecret: "secret" }),
     });
@@ -400,24 +405,14 @@ describe("Photon provider", () => {
       participants: [{ kind: "phone", value: recipientPhone }],
     });
     const found = await client.messages.get(locator);
-    const edited = await client.providers.photon.messages.edit(locator, {
-      text: "Corrected",
-    });
     await client.reactions.add({ ...locator, reaction: "like" });
     await client.reactions.remove({ ...locator, reaction: "like" });
     await client.typing.start(chat.guid);
     await client.typing.stop(chat.guid);
     await client.conversations.markRead(chat.guid);
-    await client.providers.photon.messages.delete(locator);
 
     expect(opened.providerConversationId).toBe(chat.guid);
     expect(found?.providerMessageId).toBe("photon-message-1");
-    expect(edited.text).toBe("Corrected");
-    expect(sdk.edit).toHaveBeenCalledWith(
-      chat.guid,
-      "photon-message-1",
-      "Corrected",
-    );
     expect(sdk.setReaction).toHaveBeenNthCalledWith(
       1,
       chat.guid,
@@ -437,7 +432,6 @@ describe("Photon provider", () => {
     expect(sdk.setTyping).toHaveBeenNthCalledWith(1, chat.guid, true);
     expect(sdk.setTyping).toHaveBeenNthCalledWith(2, chat.guid, false);
     expect(sdk.markRead).toHaveBeenCalledWith(chat.guid);
-    expect(sdk.unsend).toHaveBeenCalledWith(chat.guid, "photon-message-1");
   });
 
   it("catches up before draining live events and deduplicates sequences", async () => {
@@ -483,12 +477,10 @@ describe("Photon provider", () => {
       ]),
     );
     sdk.subscribeEvents.mockReturnValue(stream<MessageEvent>([reaction, read]));
-    const client = createIMessageClient({
-      provider: photon({ projectId: "project", projectSecret: "secret" }),
-    });
+    const provider = photon({ projectId: "project", projectSecret: "secret" });
 
     const events = [];
-    for await (const event of client.events.subscribe({ cursor: "6" })) {
+    for await (const event of provider.events.subscribe({ cursor: "6" })) {
       events.push(event);
     }
 
