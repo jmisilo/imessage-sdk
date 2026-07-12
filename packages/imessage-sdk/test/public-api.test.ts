@@ -55,6 +55,9 @@ function createTestProvider() {
       async send(input) {
         return createProviderMessage({ text: input.text ?? "" });
       },
+      async get() {
+        return createProviderMessage();
+      },
     },
     conversations: {
       async open(input) {
@@ -64,6 +67,14 @@ function createTestProvider() {
           raw: { source: "test" },
         };
       },
+      async get() {
+        return {
+          providerConversationId: "conversation-1",
+          participants: [recipient],
+          raw: { source: "test" },
+        };
+      },
+      async markRead() {},
     },
     reactions: {
       async add() {},
@@ -71,6 +82,7 @@ function createTestProvider() {
     },
     typing: {
       async start() {},
+      async stop() {},
     },
     webhooks: {
       async verify(request) {
@@ -107,10 +119,10 @@ describe("generic client", () => {
     expect(client.providers.blooio).toBe(provider);
 
     await expect(
-      client.messages.send({ to: recipient, text: "Not implemented yet" }),
+      client.messages.send({ to: recipient, text: "Missing credentials" }),
     ).rejects.toMatchObject({
       provider: "blooio",
-      code: "provider_not_implemented",
+      code: "missing_api_key",
     });
   });
 
@@ -190,20 +202,28 @@ describe("generic client", () => {
       } as const,
       messages: {
         ...baseProvider.messages,
-        async get(_messageId: string) {
-          void _messageId;
+        async get(message: { readonly conversationId: string; readonly messageId: string }) {
+          void message;
 
           return createProviderMessage();
         },
-        async edit(_messageId: string, input: { readonly text: string }) {
+        async edit(
+          message: { readonly conversationId: string; readonly messageId: string },
+          input: { readonly text: string },
+        ) {
+          void message;
           return createProviderMessage({ text: input.text });
         },
       },
     });
     const client = createIMessageClient({ provider });
 
-    const found = await client.providers.custom.messages.get("message-1");
-    const edited = await client.providers.custom.messages.edit("message-1", {
+    const locator = {
+      conversationId: "conversation-1",
+      messageId: "message-1",
+    };
+    const found = await client.providers.custom.messages.get(locator);
+    const edited = await client.providers.custom.messages.edit(locator, {
       text: "Edited",
     });
 
@@ -240,7 +260,10 @@ describe("generic client", () => {
     });
 
     await expect(
-      client.messages.edit("message-1", { text: "Edited" }),
+      client.messages.edit(
+        { conversationId: "conversation-1", messageId: "message-1" },
+        { text: "Edited" },
+      ),
     ).rejects.toEqual(
       expect.objectContaining({
         name: "UnsupportedCapabilityError",
@@ -250,7 +273,10 @@ describe("generic client", () => {
       }),
     );
     await expect(
-      client.messages.edit("message-1", { text: "Edited" }),
+      client.messages.edit(
+        { conversationId: "conversation-1", messageId: "message-1" },
+        { text: "Edited" },
+      ),
     ).rejects.toBeInstanceOf(UnsupportedCapabilityError);
   });
 

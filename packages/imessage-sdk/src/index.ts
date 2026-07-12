@@ -1,8 +1,14 @@
 export type { IMessageCapabilities } from "./core/capabilities.js";
 
 export {
+  AmbiguousDeliveryError,
+  AuthenticationError,
   ClientClosedError,
+  ConflictError,
   IMessageSDKError,
+  NotFoundError,
+  ProviderUnavailableError,
+  RateLimitError,
   UnsupportedCapabilityError,
   ValidationError,
   WebhookVerificationError,
@@ -63,6 +69,7 @@ export type {
   IMessageService,
   IMessageStatus,
   Message,
+  MessageLocator,
   MessageReplyReference,
   NonEmptyReadonlyArray,
   OpenConversationInput,

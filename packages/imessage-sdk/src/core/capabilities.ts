@@ -12,6 +12,7 @@ export interface IMessageCapabilities {
     readonly direct: boolean;
     readonly groups: boolean;
     readonly get: boolean;
+    readonly markRead: boolean;
   };
   readonly interactions: {
     readonly reactions: boolean;
@@ -24,4 +25,3 @@ export interface IMessageCapabilities {
     readonly stream: boolean;
   };
 }
-

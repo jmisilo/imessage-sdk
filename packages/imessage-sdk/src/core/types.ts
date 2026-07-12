@@ -50,6 +50,12 @@ export interface MessageReplyReference {
   readonly partIndex?: number;
 }
 
+/** Identifies a provider message within its native conversation. */
+export interface MessageLocator {
+  readonly conversationId: string;
+  readonly messageId: string;
+}
+
 type SendDestination =
   | {
       readonly conversationId: string;
@@ -169,9 +175,7 @@ export type IMessageReaction =
   | "emphasize"
   | "question";
 
-export interface AddReactionInput {
-  /** Provider-native message identifier. */
-  readonly messageId: string;
+export interface AddReactionInput extends MessageLocator {
   readonly reaction: IMessageReaction;
   readonly partIndex?: number;
 }
