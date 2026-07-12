@@ -18,20 +18,15 @@
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
-    "./blooio": {
-      "types": "./dist/blooio.d.ts",
-      "import": "./dist/blooio.js",
-      "default": "./dist/blooio.js"
+    "./providers/blooio": {
+      "types": "./dist/providers/blooio.d.ts",
+      "import": "./dist/providers/blooio.js",
+      "default": "./dist/providers/blooio.js"
     },
-    "./photon": {
-      "types": "./dist/photon.d.ts",
-      "import": "./dist/photon.js",
-      "default": "./dist/photon.js"
-    },
-    "./sendblue": {
-      "types": "./dist/sendblue.d.ts",
-      "import": "./dist/sendblue.js",
-      "default": "./dist/sendblue.js"
+    "./providers/photon": {
+      "types": "./dist/providers/photon.d.ts",
+      "import": "./dist/providers/photon.js",
+      "default": "./dist/providers/photon.js"
     },
     "./package.json": "./package.json"
   },
