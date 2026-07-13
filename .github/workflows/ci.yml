@@ -23,6 +23,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
       - uses: pnpm/action-setup@v4
         with:
           version: 10.18.3
@@ -32,9 +34,28 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
+      - run: pnpm build
       - run: pnpm typecheck
       - run: pnpm test
-      - run: pnpm build
+
+  changesets:
+    name: Verify changeset
+    if: github.event_name == 'pull_request' && !startsWith(github.head_ref, 'changeset-release/')
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.18.3
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm changeset status --since=origin/main
 
   package:
     name: Package smoke test
@@ -54,17 +75,21 @@ jobs:
       - name: Pack and install as a consumer
         shell: bash
         run: |
-          VERSION=$(node -p "require('./package.json').version")
           PACKAGE_DIR=$(mktemp -d)
-          npm pack --pack-destination "${PACKAGE_DIR}"
-          PACKAGE_PATH="${PACKAGE_DIR}/imessage-sdk-${VERSION}.tgz"
+          pnpm --filter imessage-sdk pack --pack-destination "${PACKAGE_DIR}"
+          pnpm --filter @imessage-sdk/blooio pack --pack-destination "${PACKAGE_DIR}"
+          pnpm --filter @imessage-sdk/photon pack --pack-destination "${PACKAGE_DIR}"
+          for PACKAGE_PATH in "${PACKAGE_DIR}"/*.tgz; do
+            pnpm exec publint "${PACKAGE_PATH}" --strict
+            pnpm exec attw "${PACKAGE_PATH}" --profile esm-only
+          done
           CONSUMER=$(mktemp -d)
+          cp -R test/package-consumer/. "${CONSUMER}"
+          npm install --prefix "${CONSUMER}" "${PACKAGE_DIR}"/*.tgz >/dev/null
+          pnpm exec tsc --project "${CONSUMER}/tsconfig.json"
           cd "${CONSUMER}"
-          npm init --yes >/dev/null
-          npm install "${PACKAGE_PATH}" >/dev/null
           node --input-type=module -e '
             await import("imessage-sdk");
-            await import("imessage-sdk/providers/blooio");
-            await import("imessage-sdk/providers/photon");
+            await import("@imessage-sdk/blooio");
+            await import("@imessage-sdk/photon");
           '
-        working-directory: packages/imessage-sdk

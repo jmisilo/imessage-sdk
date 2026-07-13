@@ -1,39 +1,37 @@
-import { z } from "zod";
+import { z } from 'zod';
 
-import {
-  AmbiguousDeliveryError,
-  AuthenticationError,
-  ConflictError,
-  IMessageSDKError,
-  NotFoundError,
-  ProviderUnavailableError,
-  RateLimitError,
-  ValidationError,
-} from "../core/errors.js";
-import type { ProviderEvent } from "../core/events.js";
-import { defineProvider } from "../core/provider.js";
-import type {
-  IMessageProvider,
-  ProviderConversations,
-  ProviderMessages,
-  ProviderReactions,
-  ProviderTyping,
-  ProviderWebhooks,
-} from "../core/provider.js";
 import type {
   IMessageAddress,
   IMessageAttachment,
+  IMessageProvider,
   IMessageReaction,
   IMessageService,
   IMessageStatus,
   MessageLocator,
   OpenConversationInput,
   ProviderConversation,
+  ProviderConversations,
+  ProviderEvent,
   ProviderMessage,
+  ProviderMessages,
+  ProviderReactions,
   ProviderSentMessage,
-} from "../core/types.js";
+  ProviderTyping,
+  ProviderWebhooks,
+} from 'imessage-sdk';
+import {
+  AmbiguousDeliveryError,
+  AuthenticationError,
+  ConflictError,
+  defineProvider,
+  IMessageSDKError,
+  NotFoundError,
+  ProviderUnavailableError,
+  RateLimitError,
+  ValidationError,
+} from 'imessage-sdk';
 
-const DEFAULT_BASE_URL = "https://api.blooio.com/v2/api";
+const DEFAULT_BASE_URL = 'https://api.blooio.com/v2/api';
 const DEFAULT_WEBHOOK_TOLERANCE_SECONDS = 300;
 
 export const BLOOIO_CAPABILITIES = {
@@ -82,12 +80,7 @@ export interface BlooioMessageStatus {
   readonly raw: unknown;
 }
 
-export type BlooioPlanKind =
-  | "shared"
-  | "dedicated"
-  | "inbound"
-  | "trial"
-  | "2fa";
+export type BlooioPlanKind = 'shared' | 'dedicated' | 'inbound' | 'trial' | '2fa';
 
 export interface BlooioNumber {
   readonly phoneNumber: string;
@@ -111,8 +104,7 @@ export interface BlooioConversations extends ProviderConversations {
   markRead(conversationId: string): Promise<void>;
 }
 
-export interface BlooioProvider
-  extends IMessageProvider<"blooio", typeof BLOOIO_CAPABILITIES> {
+export interface BlooioProvider extends IMessageProvider<'blooio', typeof BLOOIO_CAPABILITIES> {
   readonly messages: BlooioMessages;
   readonly conversations: BlooioConversations;
   readonly reactions: ProviderReactions;
@@ -123,27 +115,10 @@ export interface BlooioProvider
 
 const JsonObjectSchema = z.record(z.string(), z.unknown());
 type JsonObject = z.infer<typeof JsonObjectSchema>;
-const OptionalNonEmptyStringSchema = z
-  .string()
-  .min(1)
-  .optional()
-  .catch(undefined);
+const OptionalNonEmptyStringSchema = z.string().min(1).optional().catch(undefined);
 const OptionalNumberSchema = z.number().optional().catch(undefined);
-const ReactionSchema = z.enum([
-  "love",
-  "like",
-  "dislike",
-  "laugh",
-  "emphasize",
-  "question",
-]);
-const PlanKindSchema = z.enum([
-  "shared",
-  "dedicated",
-  "inbound",
-  "trial",
-  "2fa",
-]);
+const ReactionSchema = z.enum(['love', 'like', 'dislike', 'laugh', 'emphasize', 'question']);
+const PlanKindSchema = z.enum(['shared', 'dedicated', 'inbound', 'trial', '2fa']);
 
 function dateValue(value: unknown): Date | undefined {
   const number = OptionalNumberSchema.parse(value);
@@ -156,72 +131,72 @@ function dateValue(value: unknown): Date | undefined {
 
 function address(value: string): IMessageAddress {
   return {
-    kind: value.includes("@") ? "email" : "phone",
+    kind: value.includes('@') ? 'email' : 'phone',
     value,
   };
 }
 
-function requireAddress(value: unknown, fallback = "unknown"): IMessageAddress {
+function requireAddress(value: unknown, fallback = 'unknown'): IMessageAddress {
   return address(OptionalNonEmptyStringSchema.parse(value) ?? fallback);
 }
 
 function mapStatus(value: unknown): IMessageStatus {
-  switch (typeof value === "string" ? value.toLowerCase() : "") {
-    case "queued":
-    case "pending":
-      return "pending";
-    case "accepted":
-      return "accepted";
-    case "sent":
-      return "sent";
-    case "delivered":
-      return "delivered";
-    case "read":
-      return "read";
-    case "failed":
-    case "cancelled":
-    case "cancellation_requested":
-    case "error":
-      return "failed";
+  switch (typeof value === 'string' ? value.toLowerCase() : '') {
+    case 'queued':
+    case 'pending':
+      return 'pending';
+    case 'accepted':
+      return 'accepted';
+    case 'sent':
+      return 'sent';
+    case 'delivered':
+      return 'delivered';
+    case 'read':
+      return 'read';
+    case 'failed':
+    case 'cancelled':
+    case 'cancellation_requested':
+    case 'error':
+      return 'failed';
     default:
-      return "pending";
+      return 'pending';
   }
 }
 
 function mapService(value: unknown): IMessageService {
-  switch (typeof value === "string" ? value.toLowerCase() : "") {
-    case "imessage":
-      return "imessage";
-    case "sms":
-      return "sms";
-    case "rcs":
-      return "rcs";
+  switch (typeof value === 'string' ? value.toLowerCase() : '') {
+    case 'imessage':
+      return 'imessage';
+    case 'sms':
+      return 'sms';
+    case 'rcs':
+      return 'rcs';
     default:
-      return "unknown";
+      return 'unknown';
   }
 }
 
-function attachmentKind(contentType: string | undefined): IMessageAttachment["kind"] {
-  if (contentType?.startsWith("image/")) return "image";
-  if (contentType?.startsWith("video/")) return "video";
-  return "file";
+function attachmentKind(contentType: string | undefined): IMessageAttachment['kind'] {
+  if (contentType?.startsWith('image/')) return 'image';
+  if (contentType?.startsWith('video/')) return 'video';
+  return 'file';
 }
 
 function mapAttachment(value: unknown): IMessageAttachment {
-  if (typeof value === "string") {
-    return { kind: "file", url: value, raw: value };
+  if (typeof value === 'string') {
+    return { kind: 'file', url: value, raw: value };
   }
 
   const parsedItem = JsonObjectSchema.safeParse(value);
   const item = parsedItem.success ? parsedItem.data : {};
   const contentType =
-    OptionalNonEmptyStringSchema.parse(item["content_type"]) ??
-    OptionalNonEmptyStringSchema.parse(item["contentType"]) ??
-    OptionalNonEmptyStringSchema.parse(item["mime_type"]);
-  const id = OptionalNonEmptyStringSchema.parse(item["id"]);
-  const url = OptionalNonEmptyStringSchema.parse(item["url"]);
-  const filename = OptionalNonEmptyStringSchema.parse(item["name"]);
-  const size = OptionalNumberSchema.parse(item["size"]);
+    OptionalNonEmptyStringSchema.parse(item['content_type']) ??
+    OptionalNonEmptyStringSchema.parse(item['contentType']) ??
+    OptionalNonEmptyStringSchema.parse(item['mime_type']);
+  const id = OptionalNonEmptyStringSchema.parse(item['id']);
+  const url = OptionalNonEmptyStringSchema.parse(item['url']);
+  const filename = OptionalNonEmptyStringSchema.parse(item['name']);
+  const size = OptionalNumberSchema.parse(item['size']);
   const result: IMessageAttachment = {
     kind: attachmentKind(contentType),
     raw: value,
@@ -237,12 +212,10 @@ function mapAttachment(value: unknown): IMessageAttachment {
 function participantValues(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   return value.flatMap((participant) => {
-    if (typeof participant === "string") return [participant];
+    if (typeof participant === 'string') return [participant];
     const parsedParticipant = JsonObjectSchema.safeParse(participant);
     if (!parsedParticipant.success) return [];
-    const identifier = OptionalNonEmptyStringSchema.parse(
-      parsedParticipant.data["identifier"],
-    );
+    const identifier = OptionalNonEmptyStringSchema.parse(parsedParticipant.data['identifier']);
     return identifier === undefined ? [] : [identifier];
   });
 }
@@ -252,58 +225,56 @@ function mapProviderMessage(
   fallbackConversationId: string,
   configuredSender?: IMessageAddress,
 ): ProviderMessage {
-  const direction = raw["direction"] === "inbound" ? "inbound" : "outbound";
+  const direction = raw['direction'] === 'inbound' ? 'inbound' : 'outbound';
   const conversationId =
-    OptionalNonEmptyStringSchema.parse(raw["chat_id"]) ??
-    OptionalNonEmptyStringSchema.parse(raw["group_id"]) ??
-    OptionalNonEmptyStringSchema.parse(raw["external_id"]) ??
+    OptionalNonEmptyStringSchema.parse(raw['chat_id']) ??
+    OptionalNonEmptyStringSchema.parse(raw['group_id']) ??
+    OptionalNonEmptyStringSchema.parse(raw['external_id']) ??
     fallbackConversationId;
-  const internal = OptionalNonEmptyStringSchema.parse(raw["internal_id"]);
-  const parsedContact = JsonObjectSchema.safeParse(raw["contact"]);
+  const internal = OptionalNonEmptyStringSchema.parse(raw['internal_id']);
+  const parsedContact = JsonObjectSchema.safeParse(raw['contact']);
   const external =
-    OptionalNonEmptyStringSchema.parse(raw["sender"]) ??
+    OptionalNonEmptyStringSchema.parse(raw['sender']) ??
     (parsedContact.success
-      ? OptionalNonEmptyStringSchema.parse(parsedContact.data["identifier"])
+      ? OptionalNonEmptyStringSchema.parse(parsedContact.data['identifier'])
       : undefined) ??
-    OptionalNonEmptyStringSchema.parse(raw["external_id"]) ??
+    OptionalNonEmptyStringSchema.parse(raw['external_id']) ??
     conversationId;
-  const participants = participantValues(raw["participants"]);
+  const participants = participantValues(raw['participants']);
   const sender =
-    direction === "inbound"
+    direction === 'inbound'
       ? address(external)
       : internal === undefined
-        ? (configuredSender ?? address("unknown"))
+        ? (configuredSender ?? address('unknown'))
         : address(internal);
   const recipients =
-    direction === "inbound"
-      ? [internal === undefined ? (configuredSender ?? address("unknown")) : address(internal)]
+    direction === 'inbound'
+      ? [internal === undefined ? (configuredSender ?? address('unknown')) : address(internal)]
       : (participants.length > 0 ? participants : [external]).map(address);
-  const providerStatus = OptionalNonEmptyStringSchema.parse(raw["status"]);
-  const parsedReply = JsonObjectSchema.safeParse(raw["reply_to"]);
+  const providerStatus = OptionalNonEmptyStringSchema.parse(raw['status']);
+  const parsedReply = JsonObjectSchema.safeParse(raw['reply_to']);
   const reply = parsedReply.success ? parsedReply.data : undefined;
   const replyMessageId =
     reply === undefined
       ? undefined
-      : OptionalNonEmptyStringSchema.parse(reply["message_id"]) ??
-        OptionalNonEmptyStringSchema.parse(reply["guid"]);
-  const sentAt = dateValue(raw["time_sent"] ?? raw["sent_at"]);
-  const deliveredAt = dateValue(raw["time_delivered"] ?? raw["delivered_at"]);
-  const readAt = dateValue(raw["read_at"]);
-  const partIndex = OptionalNumberSchema.parse(reply?.["part_index"]);
+      : (OptionalNonEmptyStringSchema.parse(reply['message_id']) ??
+        OptionalNonEmptyStringSchema.parse(reply['guid']));
+  const sentAt = dateValue(raw['time_sent'] ?? raw['sent_at']);
+  const deliveredAt = dateValue(raw['time_delivered'] ?? raw['delivered_at']);
+  const readAt = dateValue(raw['read_at']);
+  const partIndex = OptionalNumberSchema.parse(reply?.['part_index']);
 
   return {
     providerMessageId:
-      OptionalNonEmptyStringSchema.parse(raw["message_id"]) ??
-      OptionalNonEmptyStringSchema.parse(raw["id"]) ??
-      "unknown",
+      OptionalNonEmptyStringSchema.parse(raw['message_id']) ??
+      OptionalNonEmptyStringSchema.parse(raw['id']) ??
+      'unknown',
     conversationId,
     direction,
     sender,
     recipients,
-    text: typeof raw["text"] === "string" ? raw["text"] : "",
-    attachments: Array.isArray(raw["attachments"])
-      ? raw["attachments"].map(mapAttachment)
-      : [],
+    text: typeof raw['text'] === 'string' ? raw['text'] : '',
+    attachments: Array.isArray(raw['attachments']) ? raw['attachments'].map(mapAttachment) : [],
     ...(replyMessageId === undefined
       ? {}
       : {
@@ -312,11 +283,10 @@ function mapProviderMessage(
             ...(partIndex === undefined ? {} : { partIndex }),
           },
         }),
-    service: mapService(raw["protocol"]),
+    service: mapService(raw['protocol']),
     status: mapStatus(providerStatus),
     ...(providerStatus === undefined ? {} : { providerStatus }),
-    createdAt:
-      sentAt ?? dateValue(raw["received_at"]) ?? dateValue(raw["timestamp"]) ?? new Date(),
+    createdAt: sentAt ?? dateValue(raw['received_at']) ?? dateValue(raw['timestamp']) ?? new Date(),
     ...(sentAt === undefined ? {} : { sentAt }),
     ...(deliveredAt === undefined ? {} : { deliveredAt }),
     ...(readAt === undefined ? {} : { readAt }),
@@ -329,25 +299,23 @@ function encodePath(value: string): string {
 }
 
 function conversationId(input: OpenConversationInput): string {
-  return input.participants.map((participant) => participant.value).join(",");
+  return input.participants.map((participant) => participant.value).join(',');
 }
 
-function parseSignature(header: string):
-  | { readonly timestamp: string; readonly signatures: readonly string[] }
-  | undefined {
+function parseSignature(
+  header: string,
+): { readonly timestamp: string; readonly signatures: readonly string[] } | undefined {
   let timestamp: string | undefined;
   const signatures: string[] = [];
-  for (const component of header.split(",")) {
-    const separator = component.indexOf("=");
+  for (const component of header.split(',')) {
+    const separator = component.indexOf('=');
     if (separator < 0) continue;
     const key = component.slice(0, separator).trim();
     const value = component.slice(separator + 1).trim();
-    if (key === "t") timestamp = value;
-    if (key === "v1") signatures.push(value);
+    if (key === 't') timestamp = value;
+    if (key === 'v1') signatures.push(value);
   }
-  return timestamp === undefined || signatures.length === 0
-    ? undefined
-    : { timestamp, signatures };
+  return timestamp === undefined || signatures.length === 0 ? undefined : { timestamp, signatures };
 }
 
 function constantTimeEqual(left: string, right: string): boolean {
@@ -362,67 +330,66 @@ function constantTimeEqual(left: string, right: string): boolean {
 async function hmacSha256(secret: string, value: string): Promise<string> {
   const encoder = new TextEncoder();
   const key = await crypto.subtle.importKey(
-    "raw",
+    'raw',
     encoder.encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
+    { name: 'HMAC', hash: 'SHA-256' },
     false,
-    ["sign"],
+    ['sign'],
   );
-  const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(value));
-  return Array.from(new Uint8Array(signature), (byte) =>
-    byte.toString(16).padStart(2, "0"),
-  ).join("");
+  const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(value));
+  return Array.from(new Uint8Array(signature), (byte) => byte.toString(16).padStart(2, '0')).join(
+    '',
+  );
 }
 
 function eventStatus(event: string, rawStatus: unknown): IMessageStatus {
   switch (event) {
-    case "message.received":
-      return "delivered";
-    case "message.sent":
-      return "sent";
-    case "message.delivered":
-      return "delivered";
-    case "message.read":
-      return "read";
-    case "message.failed":
-      return "failed";
+    case 'message.received':
+      return 'delivered';
+    case 'message.sent':
+      return 'sent';
+    case 'message.delivered':
+      return 'delivered';
+    case 'message.read':
+      return 'read';
+    case 'message.failed':
+      return 'failed';
     default:
       return mapStatus(rawStatus);
   }
 }
 
 function mapWebhookEvent(raw: JsonObject): ProviderEvent | undefined {
-  const event = OptionalNonEmptyStringSchema.parse(raw["event"]);
+  const event = OptionalNonEmptyStringSchema.parse(raw['event']);
   if (event === undefined) return undefined;
-  const timestamp = dateValue(raw["timestamp"]) ?? new Date();
-  const messageId =
-    OptionalNonEmptyStringSchema.parse(raw["message_id"]) ?? "unknown";
+  const timestamp = dateValue(raw['timestamp']) ?? new Date();
+  const messageId = OptionalNonEmptyStringSchema.parse(raw['message_id']) ?? 'unknown';
   const conversation =
-    OptionalNonEmptyStringSchema.parse(raw["group_id"]) ??
-    OptionalNonEmptyStringSchema.parse(raw["external_id"]) ??
-    "unknown";
+    OptionalNonEmptyStringSchema.parse(raw['group_id']) ??
+    OptionalNonEmptyStringSchema.parse(raw['external_id']) ??
+    'unknown';
   const id = `${event}:${messageId}:${timestamp.valueOf()}`;
 
-  if (event === "message.reaction") {
-    const parsedReaction = ReactionSchema.safeParse(raw["reaction"]);
+  if (event === 'message.reaction') {
+    const parsedReaction = ReactionSchema.safeParse(raw['reaction']);
     if (!parsedReaction.success) return undefined;
     const reaction = parsedReaction.data;
-    const partIndex = OptionalNumberSchema.parse(raw["part_index"]);
+    const partIndex = OptionalNumberSchema.parse(raw['part_index']);
     return {
       id,
-      type: raw["action"] === "remove" ? "reaction.removed" : "reaction.added",
+      type: raw['action'] === 'remove' ? 'reaction.removed' : 'reaction.added',
       timestamp,
       conversationId: conversation,
       messageId,
-      actor: requireAddress(raw["sender"] ?? raw["external_id"]),
+      actor: requireAddress(raw['sender'] ?? raw['external_id']),
       reaction,
       ...(partIndex === undefined ? {} : { partIndex }),
       raw,
     };
   }
 
-  if (event === "typing.started" || event === "typing.stopped") {
-    const actorValue = OptionalNonEmptyStringSchema.parse(raw["sender"]);
+  if (event === 'typing.started' || event === 'typing.stopped') {
+    const actorValue = OptionalNonEmptyStringSchema.parse(raw['sender']);
     return {
       id,
       type: event,
@@ -434,11 +401,11 @@ function mapWebhookEvent(raw: JsonObject): ProviderEvent | undefined {
   }
 
   if (
-    event !== "message.received" &&
-    event !== "message.sent" &&
-    event !== "message.delivered" &&
-    event !== "message.read" &&
-    event !== "message.failed"
+    event !== 'message.received' &&
+    event !== 'message.sent' &&
+    event !== 'message.delivered' &&
+    event !== 'message.read' &&
+    event !== 'message.failed'
   ) {
     return undefined;
   }
@@ -448,7 +415,11 @@ function mapWebhookEvent(raw: JsonObject): ProviderEvent | undefined {
     type: event,
     timestamp,
     message: mapProviderMessage(
-      { ...raw, direction: event === "message.received" ? "inbound" : "outbound", status: eventStatus(event, raw["status"]) },
+      {
+        ...raw,
+        direction: event === 'message.received' ? 'inbound' : 'outbound',
+        status: eventStatus(event, raw['status']),
+      },
       conversation,
     ),
     raw,
@@ -457,20 +428,18 @@ function mapWebhookEvent(raw: JsonObject): ProviderEvent | undefined {
 
 /** Creates a Blooio v2 provider. No initialization call is required. */
 export function blooio(options: BlooioOptions = {}): BlooioProvider {
-  const apiKey = options.apiKey ?? process.env["BLOOIO_API_KEY"];
-  const webhookSecret =
-    options.webhookSecret ?? process.env["BLOOIO_WEBHOOK_SECRET"];
-  const configuredSender = process.env["BLOOIO_FROM_NUMBER"];
+  const apiKey = options.apiKey ?? process.env['BLOOIO_API_KEY'];
+  const webhookSecret = options.webhookSecret ?? process.env['BLOOIO_WEBHOOK_SECRET'];
+  const configuredSender = process.env['BLOOIO_FROM_NUMBER'];
   const sender =
-    options.sender ??
-    (configuredSender === undefined ? undefined : address(configuredSender));
+    options.sender ?? (configuredSender === undefined ? undefined : address(configuredSender));
   const config: BlooioOptions = {
     ...options,
     ...(apiKey === undefined ? {} : { apiKey }),
     ...(webhookSecret === undefined ? {} : { webhookSecret }),
     ...(sender === undefined ? {} : { sender }),
   };
-  const baseUrl = (config.baseUrl ?? DEFAULT_BASE_URL).replace(/\/$/, "");
+  const baseUrl = (config.baseUrl ?? DEFAULT_BASE_URL).replace(/\/$/, '');
 
   const request = async <T>(
     path: string,
@@ -478,9 +447,9 @@ export function blooio(options: BlooioOptions = {}): BlooioProvider {
     requestOptions: { readonly send?: boolean; readonly notFoundNull?: boolean } = {},
   ): Promise<T | null> => {
     if (config.apiKey === undefined || config.apiKey.length === 0) {
-      throw new AuthenticationError("A Blooio API key is required.", {
-        provider: "blooio",
-        code: "missing_api_key",
+      throw new AuthenticationError('A Blooio API key is required.', {
+        provider: 'blooio',
+        code: 'missing_api_key',
       });
     }
 
@@ -490,21 +459,21 @@ export function blooio(options: BlooioOptions = {}): BlooioProvider {
         ...init,
         headers: {
           authorization: `Bearer ${config.apiKey}`,
-          accept: "application/json",
-          ...(init.body === undefined ? {} : { "content-type": "application/json" }),
+          accept: 'application/json',
+          ...(init.body === undefined ? {} : { 'content-type': 'application/json' }),
           ...init.headers,
         },
       });
     } catch (cause) {
       if (requestOptions.send === true) {
         throw new AmbiguousDeliveryError(
-          "The Blooio send result is unknown; retry only with the same idempotency key.",
-          { provider: "blooio", code: "ambiguous_delivery", retryable: true, raw: cause },
+          'The Blooio send result is unknown; retry only with the same idempotency key.',
+          { provider: 'blooio', code: 'ambiguous_delivery', retryable: true, raw: cause },
         );
       }
-      throw new ProviderUnavailableError("Could not reach Blooio.", {
-        provider: "blooio",
-        code: "provider_unavailable",
+      throw new ProviderUnavailableError('Could not reach Blooio.', {
+        provider: 'blooio',
+        code: 'provider_unavailable',
         retryable: true,
         raw: cause,
       });
@@ -524,14 +493,12 @@ export function blooio(options: BlooioOptions = {}): BlooioProvider {
     const parsedBody = JsonObjectSchema.safeParse(raw);
     const body = parsedBody.success ? parsedBody.data : {};
     const message =
-      OptionalNonEmptyStringSchema.parse(body["message"]) ??
-      OptionalNonEmptyStringSchema.parse(body["error"]) ??
+      OptionalNonEmptyStringSchema.parse(body['message']) ??
+      OptionalNonEmptyStringSchema.parse(body['error']) ??
       `Blooio request failed with HTTP ${response.status}.`;
-    const code =
-      OptionalNonEmptyStringSchema.parse(body["code"]) ??
-      `http_${response.status}`;
+    const code = OptionalNonEmptyStringSchema.parse(body['code']) ?? `http_${response.status}`;
     const common = {
-      provider: "blooio",
+      provider: 'blooio',
       code,
       statusCode: response.status,
       raw,
@@ -543,15 +510,12 @@ export function blooio(options: BlooioOptions = {}): BlooioProvider {
     if (response.status === 404) throw new NotFoundError(message, common);
     if (response.status === 409) throw new ConflictError(message, common);
     if (response.status === 429) {
-      const retryAfterHeader = response.headers.get("retry-after");
-      const retryAfter =
-        retryAfterHeader === null ? undefined : Number(retryAfterHeader);
+      const retryAfterHeader = response.headers.get('retry-after');
+      const retryAfter = retryAfterHeader === null ? undefined : Number(retryAfterHeader);
       throw new RateLimitError(message, {
         ...common,
         retryable: true,
-        ...(retryAfter !== undefined && Number.isFinite(retryAfter)
-          ? { retryAfter }
-          : {}),
+        ...(retryAfter !== undefined && Number.isFinite(retryAfter) ? { retryAfter } : {}),
       });
     }
     if (response.status >= 500) {
@@ -566,19 +530,14 @@ export function blooio(options: BlooioOptions = {}): BlooioProvider {
   const messages: BlooioMessages = {
     async send(input): Promise<ProviderSentMessage> {
       const destinations: readonly IMessageAddress[] =
-        input.to === undefined
-          ? []
-          : "value" in input.to
-            ? [input.to]
-            : input.to;
+        input.to === undefined ? [] : 'value' in input.to ? [input.to] : input.to;
       const chatId =
-        input.conversationId ??
-        destinations.map((recipient) => recipient.value).join(",");
+        input.conversationId ?? destinations.map((recipient) => recipient.value).join(',');
       const attachments = input.attachments?.map((attachment) => {
-        if (attachment.source.type !== "url") {
+        if (attachment.source.type !== 'url') {
           throw new ValidationError(
-            "Blooio v2 requires attachments to use a publicly accessible URL.",
-            { provider: "blooio", code: "attachment_url_required" },
+            'Blooio v2 requires attachments to use a publicly accessible URL.',
+            { provider: 'blooio', code: 'attachment_url_required' },
           );
         }
         return attachment.filename === undefined
@@ -587,12 +546,8 @@ export function blooio(options: BlooioOptions = {}): BlooioProvider {
       });
       const body = {
         ...(input.text === undefined ? {} : { text: input.text }),
-        ...(attachments === undefined || attachments.length === 0
-          ? {}
-          : { attachments }),
-        ...(config.sender === undefined
-          ? {}
-          : { from_number: config.sender.value }),
+        ...(attachments === undefined || attachments.length === 0 ? {} : { attachments }),
+        ...(config.sender === undefined ? {} : { from_number: config.sender.value }),
         ...(input.replyTo === undefined
           ? {}
           : {
@@ -607,53 +562,44 @@ export function blooio(options: BlooioOptions = {}): BlooioProvider {
       const raw = await request<JsonObject>(
         `/chats/${encodePath(chatId)}/messages`,
         {
-          method: "POST",
+          method: 'POST',
           ...(input.idempotencyKey === undefined
             ? {}
-            : { headers: { "idempotency-key": input.idempotencyKey } }),
+            : { headers: { 'idempotency-key': input.idempotencyKey } }),
           body: JSON.stringify(body),
         },
         { send: true },
       );
       const response = raw ?? {};
-      const providerMessageId = OptionalNonEmptyStringSchema.parse(
-        response["message_id"],
-      );
+      const providerMessageId = OptionalNonEmptyStringSchema.parse(response['message_id']);
       if (providerMessageId === undefined) {
-        throw new IMessageSDKError("Blooio did not return a message ID.", {
-          provider: "blooio",
-          code: "invalid_provider_response",
+        throw new IMessageSDKError('Blooio did not return a message ID.', {
+          provider: 'blooio',
+          code: 'invalid_provider_response',
           raw: response,
         });
       }
       const actualConversationId =
-        OptionalNonEmptyStringSchema.parse(response["group_id"]) ?? chatId;
-      const providerStatus = OptionalNonEmptyStringSchema.parse(
-        response["status"],
-      );
+        OptionalNonEmptyStringSchema.parse(response['group_id']) ?? chatId;
+      const providerStatus = OptionalNonEmptyStringSchema.parse(response['status']);
       const recipients =
         input.to === undefined
-          ? participantValues(response["participants"]).map(address)
+          ? participantValues(response['participants']).map(address)
           : destinations;
       return {
         providerMessageId,
         conversationId: actualConversationId,
-        direction: "outbound",
-        sender: config.sender ?? address("unknown"),
+        direction: 'outbound',
+        sender: config.sender ?? address('unknown'),
         recipients,
-        text: input.text ?? "",
+        text: input.text ?? '',
         attachments:
           input.attachments?.map((attachment): IMessageAttachment => {
-            const url =
-              attachment.source.type === "url"
-                ? attachment.source.url
-                : undefined;
+            const url = attachment.source.type === 'url' ? attachment.source.url : undefined;
             return {
               kind: attachment.kind,
               ...(url === undefined ? {} : { url }),
-              ...(attachment.filename === undefined
-                ? {}
-                : { filename: attachment.filename }),
+              ...(attachment.filename === undefined ? {} : { filename: attachment.filename }),
               ...(attachment.contentType === undefined
                 ? {}
                 : { contentType: attachment.contentType }),
@@ -661,8 +607,8 @@ export function blooio(options: BlooioOptions = {}): BlooioProvider {
             };
           }) ?? [],
         ...(input.replyTo === undefined ? {} : { replyTo: input.replyTo }),
-        service: "imessage",
-        status: mapStatus(response["status"]),
+        service: 'imessage',
+        status: mapStatus(response['status']),
         ...(providerStatus === undefined ? {} : { providerStatus }),
         createdAt: new Date(),
         raw: response,
@@ -675,9 +621,7 @@ export function blooio(options: BlooioOptions = {}): BlooioProvider {
         {},
         { notFoundNull: true },
       );
-      return raw === null
-        ? null
-        : mapProviderMessage(raw, message.conversationId, config.sender);
+      return raw === null ? null : mapProviderMessage(raw, message.conversationId, config.sender);
     },
 
     async getStatus(message) {
@@ -687,20 +631,17 @@ export function blooio(options: BlooioOptions = {}): BlooioProvider {
         { notFoundNull: true },
       );
       if (raw === null) return null;
-      const providerStatus = OptionalNonEmptyStringSchema.parse(raw["status"]);
-      const sentAt = dateValue(raw["time_sent"]);
-      const deliveredAt = dateValue(raw["time_delivered"]);
-      const error = OptionalNonEmptyStringSchema.parse(raw["error"]);
+      const providerStatus = OptionalNonEmptyStringSchema.parse(raw['status']);
+      const sentAt = dateValue(raw['time_sent']);
+      const deliveredAt = dateValue(raw['time_delivered']);
+      const error = OptionalNonEmptyStringSchema.parse(raw['error']);
       return {
-        messageId:
-          OptionalNonEmptyStringSchema.parse(raw["message_id"]) ??
-          message.messageId,
+        messageId: OptionalNonEmptyStringSchema.parse(raw['message_id']) ?? message.messageId,
         conversationId:
-          OptionalNonEmptyStringSchema.parse(raw["chat_id"]) ??
-          message.conversationId,
+          OptionalNonEmptyStringSchema.parse(raw['chat_id']) ?? message.conversationId,
         status: mapStatus(providerStatus),
         ...(providerStatus === undefined ? {} : { providerStatus }),
-        service: mapService(raw["protocol"]),
+        service: mapService(raw['protocol']),
         ...(sentAt === undefined ? {} : { sentAt }),
         ...(deliveredAt === undefined ? {} : { deliveredAt }),
         ...(error === undefined ? {} : { error }),
@@ -720,15 +661,11 @@ export function blooio(options: BlooioOptions = {}): BlooioProvider {
     },
 
     async get(id) {
-      const raw = await request<JsonObject>(
-        `/chats/${encodePath(id)}`,
-        {},
-        { notFoundNull: true },
-      );
+      const raw = await request<JsonObject>(`/chats/${encodePath(id)}`, {}, { notFoundNull: true });
       if (raw === null) return null;
-      const participantIdentifiers = participantValues(raw["participants"]);
+      const participantIdentifiers = participantValues(raw['participants']);
       const groupMembers =
-        raw["is_group"] === true || id.startsWith("grp_")
+        raw['is_group'] === true || id.startsWith('grp_')
           ? await request<JsonObject>(
               `/groups/${encodePath(id)}/members?limit=100`,
               {},
@@ -736,25 +673,24 @@ export function blooio(options: BlooioOptions = {}): BlooioProvider {
             )
           : null;
       const groupMemberIdentifiers =
-        groupMembers === null ? [] : participantValues(groupMembers["members"]);
-      const parsedContact = JsonObjectSchema.safeParse(raw["contact"]);
+        groupMembers === null ? [] : participantValues(groupMembers['members']);
+      const parsedContact = JsonObjectSchema.safeParse(raw['contact']);
       const contact = parsedContact.success ? parsedContact.data : undefined;
       const contactIdentifier =
         contact === undefined
           ? undefined
-          : OptionalNonEmptyStringSchema.parse(contact["identifier"]);
+          : OptionalNonEmptyStringSchema.parse(contact['identifier']);
       const participants =
         groupMemberIdentifiers.length > 0
           ? groupMemberIdentifiers.map(address)
           : participantIdentifiers.length > 0
             ? participantIdentifiers.map(address)
-          : contactIdentifier === undefined
-            ? [address(OptionalNonEmptyStringSchema.parse(raw["id"]) ?? id)]
-            : [address(contactIdentifier)];
-      const createdAt = dateValue(raw["first_message_time"]);
+            : contactIdentifier === undefined
+              ? [address(OptionalNonEmptyStringSchema.parse(raw['id']) ?? id)]
+              : [address(contactIdentifier)];
+      const createdAt = dateValue(raw['first_message_time']);
       return {
-        providerConversationId:
-          OptionalNonEmptyStringSchema.parse(raw["id"]) ?? id,
+        providerConversationId: OptionalNonEmptyStringSchema.parse(raw['id']) ?? id,
         participants,
         ...(createdAt === undefined ? {} : { createdAt }),
         raw,
@@ -762,48 +698,52 @@ export function blooio(options: BlooioOptions = {}): BlooioProvider {
     },
 
     async markRead(id) {
-      await request(`/chats/${encodePath(id)}/read`, { method: "POST" });
+      await request(`/chats/${encodePath(id)}/read`, { method: 'POST' });
     },
   };
 
   const react = async (
-    action: "+" | "-",
-    input: { readonly conversationId: string; readonly messageId: string; readonly reaction: IMessageReaction },
+    action: '+' | '-',
+    input: {
+      readonly conversationId: string;
+      readonly messageId: string;
+      readonly reaction: IMessageReaction;
+    },
   ): Promise<void> => {
     await request(
       `/chats/${encodePath(input.conversationId)}/messages/${encodePath(input.messageId)}/reactions`,
       {
-        method: "POST",
+        method: 'POST',
         body: JSON.stringify({ reaction: `${action}${input.reaction}` }),
       },
     );
   };
 
   return defineProvider({
-    name: "blooio",
+    name: 'blooio',
     capabilities: BLOOIO_CAPABILITIES,
     messages,
     conversations,
     reactions: {
       async add(input) {
-        await react("+", input);
+        await react('+', input);
       },
       async remove(input) {
-        await react("-", input);
+        await react('-', input);
       },
     },
     typing: {
       async start(id) {
-        await request(`/chats/${encodePath(id)}/typing`, { method: "POST" });
+        await request(`/chats/${encodePath(id)}/typing`, { method: 'POST' });
       },
       async stop(id) {
-        await request(`/chats/${encodePath(id)}/typing`, { method: "DELETE" });
+        await request(`/chats/${encodePath(id)}/typing`, { method: 'DELETE' });
       },
     },
     webhooks: {
       async verify(webhookRequest) {
         if (config.webhookSecret === undefined) return false;
-        const header = webhookRequest.headers.get("x-blooio-signature");
+        const header = webhookRequest.headers.get('x-blooio-signature');
         if (header === null) return false;
         const parsed = parseSignature(header);
         if (parsed === undefined) return false;
@@ -812,10 +752,7 @@ export function blooio(options: BlooioOptions = {}): BlooioProvider {
         const age = Math.abs(Math.floor(Date.now() / 1000) - timestamp);
         if (age > DEFAULT_WEBHOOK_TOLERANCE_SECONDS) return false;
         const rawBody = await webhookRequest.text();
-        const expected = await hmacSha256(
-          config.webhookSecret,
-          `${parsed.timestamp}.${rawBody}`,
-        );
+        const expected = await hmacSha256(config.webhookSecret, `${parsed.timestamp}.${rawBody}`);
         return parsed.signatures.some((signature) =>
           constantTimeEqual(expected, signature.toLowerCase()),
         );
@@ -833,28 +770,22 @@ export function blooio(options: BlooioOptions = {}): BlooioProvider {
     },
     numbers: {
       async list() {
-        const response = await request<JsonObject>("/me/numbers");
-        const values = Array.isArray(response?.["numbers"])
-          ? response["numbers"]
-          : [];
+        const response = await request<JsonObject>('/me/numbers');
+        const values = Array.isArray(response?.['numbers']) ? response['numbers'] : [];
         return values.flatMap((value): BlooioNumber[] => {
           const parsedValue = JsonObjectSchema.safeParse(value);
           if (!parsedValue.success) return [];
           const item = parsedValue.data;
-          const phoneNumber = OptionalNonEmptyStringSchema.parse(
-            item["phone_number"],
-          );
+          const phoneNumber = OptionalNonEmptyStringSchema.parse(item['phone_number']);
           if (phoneNumber === undefined) return [];
-          const lastActive = dateValue(item["last_active"]);
-          const parsedPlanKind = PlanKindSchema.safeParse(item["plan_kind"]);
+          const lastActive = dateValue(item['last_active']);
+          const parsedPlanKind = PlanKindSchema.safeParse(item['plan_kind']);
           return [
             {
               phoneNumber,
-              active: item["is_active"] === true,
+              active: item['is_active'] === true,
               ...(lastActive === undefined ? {} : { lastActive }),
-              ...(parsedPlanKind.success
-                ? { planKind: parsedPlanKind.data }
-                : {}),
+              ...(parsedPlanKind.success ? { planKind: parsedPlanKind.data } : {}),
               raw: item,
             },
           ];

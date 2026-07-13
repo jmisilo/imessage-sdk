@@ -3,18 +3,19 @@
 A provider-neutral, type-safe TypeScript conversation layer for iMessage
 infrastructure.
 
-The normalized v0.1 client, Blooio v2 provider, and Photon Cloud provider are
-implemented.
+The normalized v0.1 client is implemented here. Blooio v2 and Photon Cloud are
+published as separate provider packages so applications install only the
+provider dependencies they use.
 
 The package is ESM-only and ships JavaScript plus TypeScript declarations.
 
 > This is a beta release. Install the prerelease with `pnpm add
-> imessage-sdk@beta` while the public API is being validated.
+imessage-sdk@beta` while the public API is being validated.
 
 ## Install
 
 ```bash
-pnpm add imessage-sdk@beta
+pnpm add imessage-sdk@beta @imessage-sdk/blooio@beta
 ```
 
 ## Creating a client
@@ -23,8 +24,8 @@ Provider factories consume provider configuration and return a complete,
 concrete provider:
 
 ```ts
-import { createIMessageClient } from "imessage-sdk";
-import { blooio } from "imessage-sdk/providers/blooio";
+import { blooio } from '@imessage-sdk/blooio';
+import { createIMessageClient } from 'imessage-sdk';
 
 const client = createIMessageClient({
   provider: blooio(),
@@ -39,7 +40,7 @@ when the application has multiple connections or sender lines:
 
 ```ts
 const namedClient = createIMessageClient({
-  connectionId: "main-line",
+  connectionId: 'main-line',
   provider: blooio(),
 });
 
@@ -74,8 +75,8 @@ client.providers.blooio.name;
 client.providers.photon;
 
 const sent = await client.messages.send({
-  to: { kind: "phone", value: "+15551234567" },
-  text: "Hello from imessage-sdk",
+  to: { kind: 'phone', value: '+15551234567' },
+  text: 'Hello from imessage-sdk',
 });
 
 sent.provider;
@@ -93,26 +94,26 @@ public URLs, while Photon uploads all three source types:
 
 ```ts
 await client.messages.send({
-  conversationId: "provider-conversation-id",
-  text: "Three attachments",
+  conversationId: 'provider-conversation-id',
+  text: 'Three attachments',
   attachments: [
     {
-      kind: "image",
+      kind: 'image',
       source: {
-        type: "url",
-        url: "https://example.com/photo.jpg",
+        type: 'url',
+        url: 'https://example.com/photo.jpg',
       },
-      contentType: "image/jpeg",
+      contentType: 'image/jpeg',
     },
     {
-      kind: "video",
-      source: { type: "url", url: "https://example.com/clip.mp4" },
-      filename: "clip.mp4",
+      kind: 'video',
+      source: { type: 'url', url: 'https://example.com/clip.mp4' },
+      filename: 'clip.mp4',
     },
     {
-      kind: "file",
-      source: { type: "url", url: "https://example.com/document.pdf" },
-      filename: "document.pdf",
+      kind: 'file',
+      source: { type: 'url', url: 'https://example.com/document.pdf' },
+      filename: 'document.pdf',
     },
   ],
 });
@@ -122,10 +123,10 @@ Replies use the provider-native message ID and optional message-part index:
 
 ```ts
 await client.messages.send({
-  conversationId: "provider-conversation-id",
-  text: "Replying in this thread",
+  conversationId: 'provider-conversation-id',
+  text: 'Replying in this thread',
   replyTo: {
-    messageId: "provider-message-id",
+    messageId: 'provider-message-id',
     partIndex: 0,
   },
 });
@@ -139,15 +140,15 @@ the exact same instance under its typed provider namespace:
 ```ts
 const provider = blooio();
 const client = createIMessageClient({
-  connectionId: "main-line",
+  connectionId: 'main-line',
   provider,
 });
 
 client.providers.blooio === provider; // true
 
 await client.providers.blooio.messages.send({
-  to: { kind: "phone", value: "+15551234567" },
-  text: "Send directly through Blooio",
+  to: { kind: 'phone', value: '+15551234567' },
+  text: 'Send directly through Blooio',
 });
 ```
 
@@ -155,8 +156,8 @@ The normalized top-level methods remain available:
 
 ```ts
 await client.messages.send({
-  to: { kind: "phone", value: "+15551234567" },
-  text: "Send through the normalized client",
+  to: { kind: 'phone', value: '+15551234567' },
+  text: 'Send through the normalized client',
 });
 ```
 
@@ -185,11 +186,11 @@ literal name, capability values, and complete concrete provider type.
 Conceptually, provider factories are structured like this:
 
 ```ts
-import { defineProvider } from "imessage-sdk";
+import { defineProvider } from 'imessage-sdk';
 
 function blooio(options = {}) {
   return defineProvider({
-    name: "blooio" as const,
+    name: 'blooio' as const,
     capabilities: BLOOIO_CAPABILITIES,
     messages: {
       async send(input) {
@@ -237,7 +238,7 @@ methods:
 
 ```ts
 const custom = defineProvider({
-  name: "my-provider" as const,
+  name: 'my-provider' as const,
   capabilities: MY_PROVIDER_CAPABILITIES,
   messages: {
     send: sendMessage,
@@ -255,9 +256,9 @@ customClient.provider;
 //           ^? "my-provider"
 
 // Required because this concrete provider defines it as required.
-await customClient.providers["my-provider"].messages.edit(
-  { conversationId: "conversation-id", messageId: "message-id" },
-  { text: "Corrected" },
+await customClient.providers['my-provider'].messages.edit(
+  { conversationId: 'conversation-id', messageId: 'message-id' },
+  { text: 'Corrected' },
 );
 ```
 
@@ -268,12 +269,12 @@ or sender lines, it creates multiple clients and selects one explicitly:
 
 ```ts
 const sales = createIMessageClient({
-  connectionId: "sales-line",
+  connectionId: 'sales-line',
   provider: blooio(salesOptions),
 });
 
 const support = createIMessageClient({
-  connectionId: "support-line",
+  connectionId: 'support-line',
   provider: photon(supportOptions),
 });
 ```
@@ -309,10 +310,10 @@ feature checks:
 if (client.capabilities.messages.edit) {
   await client.messages.edit(
     {
-      conversationId: "provider-conversation-id",
-      messageId: "provider-message-id",
+      conversationId: 'provider-conversation-id',
+      messageId: 'provider-message-id',
     },
-    { text: "Corrected" },
+    { text: 'Corrected' },
   );
 }
 ```
@@ -340,7 +341,7 @@ const locator = {
 };
 
 await client.messages.get(locator);
-await client.reactions.add({ ...locator, reaction: "like" });
+await client.reactions.add({ ...locator, reaction: 'like' });
 await client.typing.start(sent.conversationId);
 await client.typing.stop(sent.conversationId);
 await client.conversations.markRead(sent.conversationId);
@@ -367,7 +368,7 @@ export BLOOIO_TEST_IMAGE_URL="https://..."
 export BLOOIO_TEST_VIDEO_URL="https://..."
 export BLOOIO_TEST_FILE_URL="https://..."
 
-pnpm --filter imessage-sdk test:integration:blooio
+pnpm --filter @imessage-sdk/blooio test:integration
 ```
 
 It sends three messages and exercises lookup/status, reactions, typing, and
@@ -380,11 +381,11 @@ Photon authenticates with Spectrum Cloud lazily. A dedicated phone is optional
 when the project owns exactly one line and required when it owns multiple:
 
 ```ts
-import { createIMessageClient } from "imessage-sdk";
-import { photon } from "imessage-sdk/providers/photon";
+import { photon } from '@imessage-sdk/photon';
+import { createIMessageClient } from 'imessage-sdk';
 
 const client = createIMessageClient({
-  connectionId: "photon-main",
+  connectionId: 'photon-main',
   provider: photon(),
 });
 
@@ -407,7 +408,7 @@ Cursors are durable numeric event sequences represented as strings:
 
 ```ts
 for await (const event of client.providers.photon.events.subscribe({
-  cursor: "123",
+  cursor: '123',
 })) {
   console.log(event.providerEventId, event.type);
 }
@@ -430,7 +431,7 @@ export PHOTON_TEST_IMAGE_URL="https://..."
 export PHOTON_TEST_VIDEO_URL="https://..."
 export PHOTON_TEST_FILE_URL="https://..."
 
-pnpm --filter imessage-sdk test:integration:photon
+pnpm --filter @imessage-sdk/photon test:integration
 ```
 
 On Photon Free and Pro shared lines, add the recipient under the project's
@@ -444,7 +445,7 @@ persistent stream, run the command below and send an iMessage to the line
 within 60 seconds:
 
 ```bash
-pnpm --filter imessage-sdk test:integration:photon-stream
+pnpm --filter @imessage-sdk/photon test:integration:stream
 ```
 
 ## v0.1 beta boundary

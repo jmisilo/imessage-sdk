@@ -1,9 +1,6 @@
-export type { IMessageCapabilities } from "./core/capabilities.js";
+export type { IMessageCapabilities } from './core/capabilities.js';
 
-export {
-  createFallbackConversationId,
-  isFallbackConversationId,
-} from "./core/conversation-id.js";
+export { createFallbackConversationId, isFallbackConversationId } from './core/conversation-id.js';
 
 export {
   AmbiguousDeliveryError,
@@ -17,8 +14,8 @@ export {
   UnsupportedCapabilityError,
   ValidationError,
   WebhookVerificationError,
-} from "./core/errors.js";
-export type { IMessageSDKErrorOptions } from "./core/errors.js";
+} from './core/errors.js';
+export type { IMessageSDKErrorOptions } from './core/errors.js';
 
 export type {
   IMessageDeletedEvent,
@@ -36,20 +33,17 @@ export type {
   ProviderReactionEventType,
   ProviderTypingEvent,
   ProviderTypingEventType,
-} from "./core/events.js";
+} from './core/events.js';
 
-export {
-  createIMessageClient,
-  DEFAULT_CONNECTION_ID,
-} from "./core/client.js";
+export { createIMessageClient, DEFAULT_CONNECTION_ID } from './core/client.js';
 export type {
   ClientProvider,
   ClientProviders,
   CreateIMessageClientOptions,
   IMessageClient,
-} from "./core/client.js";
+} from './core/client.js';
 
-export { defineProvider } from "./core/provider.js";
+export { defineProvider } from './core/provider.js';
 export type {
   AnyIMessageProvider,
   IMessageProvider,
@@ -59,7 +53,7 @@ export type {
   ProviderReactions,
   ProviderTyping,
   ProviderWebhooks,
-} from "./core/provider.js";
+} from './core/provider.js';
 
 export type {
   AddReactionInput,
@@ -88,4 +82,4 @@ export type {
   SendMessageInput,
   SentMessage,
   SubscribeOptions,
-} from "./core/types.js";
+} from './core/types.js';

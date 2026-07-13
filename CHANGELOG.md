@@ -6,6 +6,13 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- Split Blooio and Photon from the core package into independently installable
+  `@imessage-sdk/blooio` and `@imessage-sdk/photon` packages.
+- Replaced the single-package tag publisher with Changesets version pull
+  requests, independent package versions, and package-specific GitHub Releases.
+
 ## [0.1.0-beta.0] - 2026-07-12
 
 Initial public beta.

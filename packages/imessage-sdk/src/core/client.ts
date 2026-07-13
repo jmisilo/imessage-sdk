@@ -1,15 +1,5 @@
-import {
-  ClientClosedError,
-  UnsupportedCapabilityError,
-  ValidationError,
-  WebhookVerificationError,
-} from "./errors.js";
-import {
-  createFallbackConversationId,
-  isFallbackConversationId,
-} from "./conversation-id.js";
-import type { IMessageEvent, ProviderEvent } from "./events.js";
-import type { AnyIMessageProvider } from "./provider.js";
+import type { IMessageEvent, ProviderEvent } from './events.js';
+import type { AnyIMessageProvider } from './provider.js';
 import type {
   AddReactionInput,
   Conversation,
@@ -24,16 +14,23 @@ import type {
   SendMessageInput,
   SentMessage,
   SubscribeOptions,
-} from "./types.js";
+} from './types.js';
+import { createFallbackConversationId, isFallbackConversationId } from './conversation-id.js';
+import {
+  ClientClosedError,
+  UnsupportedCapabilityError,
+  ValidationError,
+  WebhookVerificationError,
+} from './errors.js';
 
-type ProviderNameOf<TProvider extends AnyIMessageProvider> = TProvider["name"];
+type ProviderNameOf<TProvider extends AnyIMessageProvider> = TProvider['name'];
 
-export const DEFAULT_CONNECTION_ID = "default" as const;
+export const DEFAULT_CONNECTION_ID = 'default' as const;
 
 export type ClientProvider<TProvider extends AnyIMessageProvider> = TProvider;
 
 export type ClientProviders<TProvider extends AnyIMessageProvider> = {
-  readonly [TName in TProvider["name"]]: ClientProvider<
+  readonly [TName in TProvider['name']]: ClientProvider<
     Extract<TProvider, { readonly name: TName }>
   >;
 };
@@ -44,16 +41,12 @@ export interface IMessageClient<
 > {
   readonly provider: ProviderNameOf<TProvider>;
   readonly connectionId: TConnectionId;
-  readonly capabilities: TProvider["capabilities"];
+  readonly capabilities: TProvider['capabilities'];
   readonly providers: ClientProviders<TProvider>;
 
   readonly messages: {
-    send(
-      input: SendMessageInput,
-    ): Promise<SentMessage<ProviderNameOf<TProvider>, TConnectionId>>;
-    get(message: MessageLocator): Promise<
-      Message<ProviderNameOf<TProvider>, TConnectionId> | null
-    >;
+    send(input: SendMessageInput): Promise<SentMessage<ProviderNameOf<TProvider>, TConnectionId>>;
+    get(message: MessageLocator): Promise<Message<ProviderNameOf<TProvider>, TConnectionId> | null>;
     edit(
       message: MessageLocator,
       input: EditMessageInput,
@@ -84,9 +77,7 @@ export interface IMessageClient<
   readonly webhooks: {
     handle(
       request: Request,
-    ): Promise<
-      readonly IMessageEvent<ProviderNameOf<TProvider>, TConnectionId>[]
-    >;
+    ): Promise<readonly IMessageEvent<ProviderNameOf<TProvider>, TConnectionId>[]>;
   };
 
   readonly events: {
@@ -110,44 +101,33 @@ function validateProvider(provider: AnyIMessageProvider): void {
   const capabilities = provider.capabilities;
 
   const requirements: readonly [boolean, unknown, string][] = [
-    [capabilities.messages.get, provider.messages.get, "messages.get"],
-    [capabilities.messages.edit, provider.messages.edit, "messages.edit"],
-    [capabilities.messages.delete, provider.messages.delete, "messages.delete"],
-    [
-      capabilities.conversations.get,
-      provider.conversations.get,
-      "conversations.get",
-    ],
+    [capabilities.messages.get, provider.messages.get, 'messages.get'],
+    [capabilities.messages.edit, provider.messages.edit, 'messages.edit'],
+    [capabilities.messages.delete, provider.messages.delete, 'messages.delete'],
+    [capabilities.conversations.get, provider.conversations.get, 'conversations.get'],
     [
       capabilities.conversations.markRead,
       provider.conversations.markRead,
-      "conversations.markRead",
+      'conversations.markRead',
     ],
-    [capabilities.interactions.reactions, provider.reactions, "reactions"],
-    [capabilities.interactions.typingStart, provider.typing, "typing.start"],
-    [
-      capabilities.interactions.typingStop,
-      provider.typing?.stop,
-      "typing.stop",
-    ],
-    [capabilities.events.webhooks, provider.webhooks, "webhooks"],
-    [capabilities.events.stream, provider.events, "events.subscribe"],
+    [capabilities.interactions.reactions, provider.reactions, 'reactions'],
+    [capabilities.interactions.typingStart, provider.typing, 'typing.start'],
+    [capabilities.interactions.typingStop, provider.typing?.stop, 'typing.stop'],
+    [capabilities.events.webhooks, provider.webhooks, 'webhooks'],
+    [capabilities.events.stream, provider.events, 'events.subscribe'],
   ];
 
   for (const [enabled, implementation, capability] of requirements) {
     if (enabled && implementation === undefined) {
       throw new ValidationError(
         `Provider ${provider.name} declares ${capability} but does not implement it.`,
-        { provider: provider.name, code: "invalid_provider_contract" },
+        { provider: provider.name, code: 'invalid_provider_contract' },
       );
     }
   }
 }
 
-function decorateMessage<
-  TProvider extends IMessageProviderName,
-  TConnectionId extends string,
->(
+function decorateMessage<TProvider extends IMessageProviderName, TConnectionId extends string>(
   message: ProviderMessage,
   provider: TProvider,
   connectionId: TConnectionId,
@@ -157,19 +137,13 @@ function decorateMessage<
     id: message.providerMessageId,
     conversationId:
       message.conversationId ??
-      createFallbackConversationId(
-        message.providerMessageId,
-        message.createdAt,
-      ),
+      createFallbackConversationId(message.providerMessageId, message.createdAt),
     provider,
     connectionId,
   };
 }
 
-function decorateConversation<
-  TProvider extends IMessageProviderName,
-  TConnectionId extends string,
->(
+function decorateConversation<TProvider extends IMessageProviderName, TConnectionId extends string>(
   conversation: ProviderConversation,
   provider: TProvider,
   connectionId: TConnectionId,
@@ -182,40 +156,34 @@ function decorateConversation<
   };
 }
 
-function decorateEvent<
-  TProvider extends IMessageProviderName,
-  TConnectionId extends string,
->(
+function decorateEvent<TProvider extends IMessageProviderName, TConnectionId extends string>(
   event: ProviderEvent,
   provider: TProvider,
   connectionId: TConnectionId,
 ): IMessageEvent<TProvider, TConnectionId> {
   switch (event.type) {
-    case "message.received":
-    case "message.sent":
-    case "message.delivered":
-    case "message.read":
-    case "message.failed":
-    case "message.edited":
+    case 'message.received':
+    case 'message.sent':
+    case 'message.delivered':
+    case 'message.read':
+    case 'message.failed':
+    case 'message.edited':
       return {
         ...event,
         provider,
         connectionId,
         message: decorateMessage(event.message, provider, connectionId),
       };
-    case "message.deleted":
-    case "reaction.added":
-    case "reaction.removed":
-    case "typing.started":
-    case "typing.stopped":
+    case 'message.deleted':
+    case 'reaction.added':
+    case 'reaction.removed':
+    case 'typing.started':
+    case 'typing.stopped':
       return { ...event, provider, connectionId };
   }
 }
 
-function mapEvents<
-  TProvider extends IMessageProviderName,
-  TConnectionId extends string,
->(
+function mapEvents<TProvider extends IMessageProviderName, TConnectionId extends string>(
   events: AsyncIterable<ProviderEvent>,
   provider: TProvider,
   connectionId: TConnectionId,
@@ -236,13 +204,12 @@ export function createIMessageClient<
   options: CreateIMessageClientOptions<TProvider, TConnectionId>,
 ): IMessageClient<TProvider, TConnectionId> {
   const { provider } = options;
-  const connectionId = (options.connectionId ??
-    DEFAULT_CONNECTION_ID) as TConnectionId;
+  const connectionId = (options.connectionId ?? DEFAULT_CONNECTION_ID) as TConnectionId;
 
   if (connectionId.trim().length === 0) {
-    throw new ValidationError("connectionId must not be empty.", {
+    throw new ValidationError('connectionId must not be empty.', {
       provider: provider.name,
-      code: "invalid_connection_id",
+      code: 'invalid_connection_id',
     });
   }
 
@@ -269,16 +236,13 @@ export function createIMessageClient<
   const assertRoutableConversationId = (conversationId: string): void => {
     if (isFallbackConversationId(conversationId)) {
       throw new ValidationError(
-        "SDK fallback conversation IDs are diagnostic and cannot be used for provider operations.",
-        { ...errorContext, code: "non_routable_conversation_id" },
+        'SDK fallback conversation IDs are diagnostic and cannot be used for provider operations.',
+        { ...errorContext, code: 'non_routable_conversation_id' },
       );
     }
   };
 
-  const requireImplementation = <T>(
-    implementation: T | undefined,
-    capability: string,
-  ): T => {
+  const requireImplementation = <T>(implementation: T | undefined, capability: string): T => {
     if (implementation === undefined) {
       throw new UnsupportedCapabilityError(capability, errorContext);
     }
@@ -304,7 +268,7 @@ export function createIMessageClient<
         }
 
         if (input.text !== undefined && !provider.capabilities.messages.text) {
-          unsupported("messages.text");
+          unsupported('messages.text');
         }
 
         if (
@@ -312,14 +276,11 @@ export function createIMessageClient<
           input.attachments.length > 0 &&
           !provider.capabilities.messages.attachments
         ) {
-          unsupported("messages.attachments");
+          unsupported('messages.attachments');
         }
 
-        if (
-          input.replyTo !== undefined &&
-          !provider.capabilities.messages.replies
-        ) {
-          unsupported("messages.replies");
+        if (input.replyTo !== undefined && !provider.capabilities.messages.replies) {
+          unsupported('messages.replies');
         }
 
         if (input.to !== undefined) {
@@ -327,11 +288,11 @@ export function createIMessageClient<
           const isGroup = recipients.length > 1;
 
           if (isGroup && !provider.capabilities.conversations.groups) {
-            unsupported("conversations.groups");
+            unsupported('conversations.groups');
           }
 
           if (!isGroup && !provider.capabilities.conversations.direct) {
-            unsupported("conversations.direct");
+            unsupported('conversations.direct');
           }
         }
 
@@ -346,31 +307,23 @@ export function createIMessageClient<
         assertRoutableConversationId(message.conversationId);
 
         if (!provider.capabilities.messages.get) {
-          unsupported("messages.get");
+          unsupported('messages.get');
         }
 
-        const get = requireImplementation(
-          provider.messages.get,
-          "messages.get",
-        );
+        const get = requireImplementation(provider.messages.get, 'messages.get');
 
         const result = await get.call(provider.messages, message);
-        return result === null
-          ? null
-          : decorateMessage(result, provider.name, connectionId);
+        return result === null ? null : decorateMessage(result, provider.name, connectionId);
       },
       async edit(message, input) {
         assertOpen();
         assertRoutableConversationId(message.conversationId);
 
         if (!provider.capabilities.messages.edit) {
-          unsupported("messages.edit");
+          unsupported('messages.edit');
         }
 
-        const edit = requireImplementation(
-          provider.messages.edit,
-          "messages.edit",
-        );
+        const edit = requireImplementation(provider.messages.edit, 'messages.edit');
 
         const result = await edit.call(provider.messages, message, input);
         return decorateMessage(result, provider.name, connectionId);
@@ -380,13 +333,10 @@ export function createIMessageClient<
         assertRoutableConversationId(message.conversationId);
 
         if (!provider.capabilities.messages.delete) {
-          unsupported("messages.delete");
+          unsupported('messages.delete');
         }
 
-        const deleteMessage = requireImplementation(
-          provider.messages.delete,
-          "messages.delete",
-        );
+        const deleteMessage = requireImplementation(provider.messages.delete, 'messages.delete');
 
         await deleteMessage.call(provider.messages, message);
       },
@@ -397,37 +347,27 @@ export function createIMessageClient<
         const isGroup = input.participants.length > 1;
 
         if (isGroup && !provider.capabilities.conversations.groups) {
-          unsupported("conversations.groups");
+          unsupported('conversations.groups');
         }
 
         if (!isGroup && !provider.capabilities.conversations.direct) {
-          unsupported("conversations.direct");
+          unsupported('conversations.direct');
         }
 
         const conversation = await provider.conversations.open(input);
-        return decorateConversation(
-          conversation,
-          provider.name,
-          connectionId,
-        );
+        return decorateConversation(conversation, provider.name, connectionId);
       },
       async get(conversationId) {
         assertOpen();
         assertRoutableConversationId(conversationId);
 
         if (!provider.capabilities.conversations.get) {
-          unsupported("conversations.get");
+          unsupported('conversations.get');
         }
 
-        const get = requireImplementation(
-          provider.conversations.get,
-          "conversations.get",
-        );
+        const get = requireImplementation(provider.conversations.get, 'conversations.get');
 
-        const conversation = await get.call(
-          provider.conversations,
-          conversationId,
-        );
+        const conversation = await get.call(provider.conversations, conversationId);
         return conversation === null
           ? null
           : decorateConversation(conversation, provider.name, connectionId);
@@ -437,12 +377,12 @@ export function createIMessageClient<
         assertRoutableConversationId(conversationId);
 
         if (!provider.capabilities.conversations.markRead) {
-          unsupported("conversations.markRead");
+          unsupported('conversations.markRead');
         }
 
         const markRead = requireImplementation(
           provider.conversations.markRead,
-          "conversations.markRead",
+          'conversations.markRead',
         );
         await markRead.call(provider.conversations, conversationId);
       },
@@ -453,13 +393,10 @@ export function createIMessageClient<
         assertRoutableConversationId(input.conversationId);
 
         if (!provider.capabilities.interactions.reactions) {
-          unsupported("reactions.add");
+          unsupported('reactions.add');
         }
 
-        const reactions = requireImplementation(
-          provider.reactions,
-          "reactions.add",
-        );
+        const reactions = requireImplementation(provider.reactions, 'reactions.add');
 
         await reactions.add(input);
       },
@@ -468,13 +405,10 @@ export function createIMessageClient<
         assertRoutableConversationId(input.conversationId);
 
         if (!provider.capabilities.interactions.reactions) {
-          unsupported("reactions.remove");
+          unsupported('reactions.remove');
         }
 
-        const reactions = requireImplementation(
-          provider.reactions,
-          "reactions.remove",
-        );
+        const reactions = requireImplementation(provider.reactions, 'reactions.remove');
 
         await reactions.remove(input);
       },
@@ -485,10 +419,10 @@ export function createIMessageClient<
         assertRoutableConversationId(conversationId);
 
         if (!provider.capabilities.interactions.typingStart) {
-          unsupported("typing.start");
+          unsupported('typing.start');
         }
 
-        const typing = requireImplementation(provider.typing, "typing.start");
+        const typing = requireImplementation(provider.typing, 'typing.start');
 
         await typing.start(conversationId);
       },
@@ -497,11 +431,11 @@ export function createIMessageClient<
         assertRoutableConversationId(conversationId);
 
         if (!provider.capabilities.interactions.typingStop) {
-          unsupported("typing.stop");
+          unsupported('typing.stop');
         }
 
-        const typing = requireImplementation(provider.typing, "typing.stop");
-        const stop = requireImplementation(typing.stop, "typing.stop");
+        const typing = requireImplementation(provider.typing, 'typing.stop');
+        const stop = requireImplementation(typing.stop, 'typing.stop');
 
         await stop.call(typing, conversationId);
       },
@@ -511,13 +445,10 @@ export function createIMessageClient<
         assertOpen();
 
         if (!provider.capabilities.events.webhooks) {
-          unsupported("webhooks.handle");
+          unsupported('webhooks.handle');
         }
 
-        const webhooks = requireImplementation(
-          provider.webhooks,
-          "webhooks.handle",
-        );
+        const webhooks = requireImplementation(provider.webhooks, 'webhooks.handle');
 
         const verified = await webhooks.verify(request.clone());
         if (!verified) {
@@ -525,9 +456,7 @@ export function createIMessageClient<
         }
 
         const events = await webhooks.parse(request);
-        return events.map((event) =>
-          decorateEvent(event, provider.name, connectionId),
-        );
+        return events.map((event) => decorateEvent(event, provider.name, connectionId));
       },
     },
     events: {
@@ -535,19 +464,12 @@ export function createIMessageClient<
         assertOpen();
 
         if (!provider.capabilities.events.stream) {
-          unsupported("events.subscribe");
+          unsupported('events.subscribe');
         }
 
-        const events = requireImplementation(
-          provider.events,
-          "events.subscribe",
-        );
+        const events = requireImplementation(provider.events, 'events.subscribe');
 
-        return mapEvents(
-          events.subscribe(options),
-          provider.name,
-          connectionId,
-        );
+        return mapEvents(events.subscribe(options), provider.name, connectionId);
       },
     },
     close() {
@@ -556,9 +478,7 @@ export function createIMessageClient<
       }
 
       closed = true;
-      closePromise = Promise.resolve().then(
-        async () => await provider.close?.(),
-      );
+      closePromise = Promise.resolve().then(async () => await provider.close?.());
       return closePromise;
     },
   };

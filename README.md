@@ -2,9 +2,9 @@
 
 A provider-neutral TypeScript conversation layer for iMessage infrastructure.
 
-The repository currently publishes [`imessage-sdk`](./packages/imessage-sdk),
-with built-in Blooio v2 and Photon Cloud providers and a public contract for
-custom providers.
+The repository contains the provider-neutral [`imessage-sdk`](./packages/imessage-sdk)
+core and independently installable providers. The
+core also exposes a public contract for custom providers.
 
 > `0.1.0-beta.0` is a prerelease. Install it with the `beta` tag while the
 > public API is being validated in real applications.
@@ -12,12 +12,12 @@ custom providers.
 ## Install
 
 ```bash
-pnpm add imessage-sdk@beta
+pnpm add imessage-sdk@beta @imessage-sdk/blooio@beta
 ```
 
 ```ts
-import { createIMessageClient } from "imessage-sdk";
-import { blooio } from "imessage-sdk/providers/blooio";
+import { blooio } from '@imessage-sdk/blooio';
+import { createIMessageClient } from 'imessage-sdk';
 
 const client = createIMessageClient({
   provider: blooio(),
@@ -52,27 +52,70 @@ pnpm --filter imessage-sdk build
 
 ```text
 packages/
-├── imessage-sdk/     Publishable SDK package
-├── chat-adapter/     Private placeholder for @imessage-sdk/chat-adapter
-├── eve-channel/      Private placeholder for @imessage-sdk/eve-channel
-└── cli/              Private placeholder for @imessage-sdk/cli
+├── imessage-sdk/          Provider-neutral core package
+├── providers/
+│   ├── blooio/            @imessage-sdk/blooio
+│   └── photon/            @imessage-sdk/photon
+├── chat-adapter/          Private placeholder for @imessage-sdk/chat-adapter
+├── eve-channel/           Private placeholder for @imessage-sdk/eve-channel
+└── cli/                   Private placeholder for @imessage-sdk/cli
 ```
 
-Only `packages/imessage-sdk` is publishable. The repository root and future
-package placeholders are private.
+The core and provider packages are independently publishable. The repository
+root and future package placeholders are private.
 
 ## Releases
 
-Package releases use tags in this form:
+Public changes use Changesets and conventional Semantic Versioning. Add a
+changeset in a feature pull request with:
 
-```text
-imessage-sdk@0.1.0-beta.0
-imessage-sdk@0.1.0
+```bash
+pnpm changeset
 ```
 
-Pushing a matching tag runs the publish workflow. It verifies, builds, and
-publishes the package when that version is absent from npm, then creates the
-corresponding GitHub prerelease or stable release. If a version was published
-manually, the workflow skips npm and backfills the GitHub Release.
+After feature changes reach `main`, automation opens or updates a **Version
+Packages** pull request containing generated package versions and changelogs.
+Merging that pull request verifies, builds, and publishes changed packages,
+then creates package-specific Git tags and GitHub Releases, such as
+`imessage-sdk@0.1.0` and `@imessage-sdk/blooio@0.1.0`.
+
+The repository is currently in Changesets `beta` prerelease mode. Release PRs
+therefore produce versions such as `0.1.0-beta.1` and publish them under the
+`beta` npm dist-tag. When the public API is ready, run `pnpm changeset pre exit`
+on a branch and merge that change through the same reviewed flow.
+
+### Release automation setup
+
+The `Release` workflow requires:
+
+- a `CHANGESETS_TOKEN` repository secret containing a fine-grained GitHub token
+  with repository Contents and Pull requests write access;
+- an `npm-production` GitHub environment;
+- an npm trusted publisher for every public package, all pointing to
+  `jmisilo/imessage-sdk`, `.github/workflows/release.yml`, and the
+  `npm-production` environment.
+
+A separate GitHub token is used because pull requests opened with the default
+workflow token require a maintainer to approve their workflow runs. Using
+`CHANGESETS_TOKEN` lets the generated Version Packages pull request receive the
+normal CI and package smoke tests automatically.
+
+### Internal package dependencies
+
+Workspace packages import public package names, never another package's source
+directory:
+
+```ts
+import { blooio } from '@imessage-sdk/blooio';
+import { createIMessageClient } from 'imessage-sdk';
+```
+
+Publishable packages declare internal runtime dependencies with `workspace:^`.
+pnpm links them locally and rewrites them to compatible npm ranges when packed
+or published. Changesets updates dependent ranges and versions when a core
+release falls outside an existing range.
 
 See [CHANGELOG.md](./CHANGELOG.md) for release notes.
+
+See [RELEASING.md](./RELEASING.md) for first-time npm/GitHub setup and the
+regular Changesets release process.

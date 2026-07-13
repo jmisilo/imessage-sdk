@@ -1,20 +1,20 @@
 {
-  "name": "imessage-sdk",
+  "name": "@imessage-sdk/photon",
   "version": "0.1.0-beta.0",
-  "description": "Provider-neutral TypeScript SDK for iMessage infrastructure",
+  "description": "Photon Cloud provider for imessage-sdk",
   "author": "jmisilo",
   "keywords": [
     "imessage",
+    "photon",
     "messaging",
-    "sdk",
     "typescript"
   ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/jmisilo/imessage-sdk.git",
-    "directory": "packages/imessage-sdk"
+    "directory": "packages/providers/photon"
   },
-  "homepage": "https://github.com/jmisilo/imessage-sdk/tree/main/packages/imessage-sdk#readme",
+  "homepage": "https://github.com/jmisilo/imessage-sdk/tree/main/packages/providers/photon#readme",
   "bugs": {
     "url": "https://github.com/jmisilo/imessage-sdk/issues"
   },
@@ -44,11 +44,19 @@
     "dev": "tsup --watch",
     "prepack": "pnpm build",
     "test": "vitest run",
+    "test:integration": "PHOTON_LIVE_TEST=1 vitest run test/photon.integration.test.ts",
+    "test:integration:stream": "PHOTON_LIVE_STREAM_TEST=1 vitest run test/photon.integration.test.ts",
     "test:watch": "vitest",
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "publishConfig": {
     "access": "public",
     "provenance": true
+  },
+  "dependencies": {
+    "@photon-ai/advanced-imessage": "^1.0.0",
+    "@spectrum-ts/core": "^9.3.1",
+    "imessage-sdk": "workspace:^",
+    "zod": "^4.4.3"
   }
 }

@@ -53,34 +53,30 @@ export class UnsupportedCapabilityError extends IMessageSDKError {
 
   constructor(
     capability: string,
-    options: Pick<IMessageSDKErrorOptions, "provider" | "connectionId"> = {},
+    options: Pick<IMessageSDKErrorOptions, 'provider' | 'connectionId'> = {},
   ) {
     super(`The selected provider does not support ${capability}.`, {
       ...options,
-      code: "unsupported_capability",
+      code: 'unsupported_capability',
     });
     this.capability = capability;
   }
 }
 
 export class WebhookVerificationError extends IMessageSDKError {
-  constructor(
-    options: Pick<IMessageSDKErrorOptions, "provider" | "connectionId"> = {},
-  ) {
-    super("Webhook signature verification failed.", {
+  constructor(options: Pick<IMessageSDKErrorOptions, 'provider' | 'connectionId'> = {}) {
+    super('Webhook signature verification failed.', {
       ...options,
-      code: "webhook_verification_failed",
+      code: 'webhook_verification_failed',
     });
   }
 }
 
 export class ClientClosedError extends IMessageSDKError {
-  constructor(
-    options: Pick<IMessageSDKErrorOptions, "provider" | "connectionId"> = {},
-  ) {
-    super("This iMessage client has already been closed.", {
+  constructor(options: Pick<IMessageSDKErrorOptions, 'provider' | 'connectionId'> = {}) {
+    super('This iMessage client has already been closed.', {
       ...options,
-      code: "client_closed",
+      code: 'client_closed',
     });
   }
 }
