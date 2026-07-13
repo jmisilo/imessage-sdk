@@ -1,7 +1,7 @@
 packages:
-  - "packages/*"
-  - "examples/*"
+  - 'packages/*'
+  - 'packages/providers/*'
+  - 'examples/*'
 
 onlyBuiltDependencies:
   - esbuild
-

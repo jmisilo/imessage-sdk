@@ -4,5 +4,8 @@
   "private": true,
   "description": "Chat SDK adapter for imessage-sdk",
   "license": "MIT",
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "imessage-sdk": "workspace:^"
+  }
 }

@@ -1,63 +1,62 @@
+import type {
+  AdvancedIMessage,
+  Chat,
+  MessageContent,
+  MessageEvent,
+  Message as PhotonMessage,
+  RetryOptions,
+  SettableMessageReaction,
+  TypedEventStream,
+} from '@photon-ai/advanced-imessage';
+import type { TokenData } from '@spectrum-ts/core';
+
 import {
+  createClient,
   AuthenticationError as PhotonAuthenticationError,
   ConnectionError as PhotonConnectionError,
   IMessageError as PhotonError,
   NotFoundError as PhotonNotFoundError,
   RateLimitError as PhotonRateLimitError,
   ValidationError as PhotonValidationError,
-  createClient,
-} from "@photon-ai/advanced-imessage";
-import type {
-  AdvancedIMessage,
-  Chat,
-  Message as PhotonMessage,
-  MessageContent,
-  MessageEvent,
-  RetryOptions,
-  SettableMessageReaction,
-  TypedEventStream,
-} from "@photon-ai/advanced-imessage";
-import { cloud, SpectrumCloudError } from "@spectrum-ts/core";
-import type { TokenData } from "@spectrum-ts/core";
-import { z } from "zod";
+} from '@photon-ai/advanced-imessage';
+import { cloud, SpectrumCloudError } from '@spectrum-ts/core';
+import { z } from 'zod';
 
-import {
-  AmbiguousDeliveryError,
-  AuthenticationError,
-  ConflictError,
-  IMessageSDKError,
-  NotFoundError,
-  ProviderUnavailableError,
-  RateLimitError,
-  ValidationError,
-} from "../core/errors.js";
-import type { ProviderEvent } from "../core/events.js";
-import { defineProvider } from "../core/provider.js";
-import type {
-  IMessageProvider,
-  ProviderConversations,
-  ProviderEvents,
-  ProviderMessages,
-  ProviderReactions,
-  ProviderTyping,
-  ProviderWebhooks,
-} from "../core/provider.js";
 import type {
   IMessageAddress,
   IMessageAttachment,
   IMessageAttachmentInput,
+  IMessageProvider,
   IMessageReaction,
   IMessageService,
   IMessageStatus,
   MessageLocator,
   ProviderConversation,
+  ProviderConversations,
+  ProviderEvent,
+  ProviderEvents,
   ProviderMessage,
+  ProviderMessages,
+  ProviderReactions,
   ProviderSentMessage,
+  ProviderTyping,
+  ProviderWebhooks,
   SubscribeOptions,
-} from "../core/types.js";
+} from 'imessage-sdk';
+import {
+  AmbiguousDeliveryError,
+  AuthenticationError,
+  ConflictError,
+  defineProvider,
+  IMessageSDKError,
+  NotFoundError,
+  ProviderUnavailableError,
+  RateLimitError,
+  ValidationError,
+} from 'imessage-sdk';
 
-const SHARED_ADDRESS = "imessage.spectrum.photon.codes:443";
-const SHARED_PHONE = "shared";
+const SHARED_ADDRESS = 'imessage.spectrum.photon.codes:443';
+const SHARED_PHONE = 'shared';
 const TOKEN_EXPIRY_BUFFER_MS = 30_000;
 const TOKEN_RENEWAL_RATIO = 0.8;
 const TOKEN_RETRY_MS = 30_000;
@@ -103,15 +102,14 @@ export interface PhotonOptions {
 export interface PhotonLine {
   readonly phone: string;
   readonly instanceId: string;
-  readonly type: "dedicated" | "shared";
+  readonly type: 'dedicated' | 'shared';
 }
 
 export interface PhotonConnection {
   getLine(): Promise<PhotonLine>;
 }
 
-export interface PhotonMessages
-  extends Omit<ProviderMessages, "edit" | "delete"> {
+export interface PhotonMessages extends Omit<ProviderMessages, 'edit' | 'delete'> {
   get(message: MessageLocator): Promise<ProviderMessage | null>;
 }
 
@@ -120,8 +118,7 @@ export interface PhotonConversations extends ProviderConversations {
   markRead(conversationId: string): Promise<void>;
 }
 
-export interface PhotonProvider
-  extends IMessageProvider<"photon", typeof PHOTON_CAPABILITIES> {
+export interface PhotonProvider extends IMessageProvider<'photon', typeof PHOTON_CAPABILITIES> {
   readonly messages: PhotonMessages;
   readonly conversations: PhotonConversations;
   readonly reactions: ProviderReactions;
@@ -138,7 +135,7 @@ interface CloudConnection {
 }
 
 const WebhookAttachmentSchema = z.object({
-  type: z.literal("attachment"),
+  type: z.literal('attachment'),
   id: z.string().min(1),
   name: z.string().min(1),
   mimeType: z.string().min(1),
@@ -147,7 +144,7 @@ const WebhookAttachmentSchema = z.object({
 
 const WebhookMessageSchema = z.object({
   id: z.string().min(1),
-  direction: z.literal("inbound"),
+  direction: z.literal('inbound'),
   timestamp: z.iso.datetime(),
   sender: z.object({ id: z.string().min(1) }),
   space: z.object({
@@ -155,15 +152,15 @@ const WebhookMessageSchema = z.object({
     phone: z.string().min(1).optional(),
   }),
   content: z.union([
-    z.object({ type: z.literal("text"), text: z.string() }),
+    z.object({ type: z.literal('text'), text: z.string() }),
     WebhookAttachmentSchema,
     z.object({
-      type: z.literal("reaction"),
+      type: z.literal('reaction'),
       emoji: z.string().min(1),
       target: z.object({ id: z.string().min(1) }),
     }),
     z.object({
-      type: z.literal("group"),
+      type: z.literal('group'),
       items: z.array(
         z.object({
           content: WebhookAttachmentSchema,
@@ -174,7 +171,7 @@ const WebhookMessageSchema = z.object({
 });
 
 const WebhookPayloadSchema = z.object({
-  event: z.literal("messages"),
+  event: z.literal('messages'),
   message: WebhookMessageSchema,
   space: z.object({
     id: z.string().min(1),
@@ -183,46 +180,46 @@ const WebhookPayloadSchema = z.object({
 });
 
 function address(value: string): IMessageAddress {
-  return { kind: value.includes("@") ? "email" : "phone", value };
+  return { kind: value.includes('@') ? 'email' : 'phone', value };
 }
 
 function mapService(value: string): IMessageService {
   switch (value) {
-    case "iMessage":
-      return "imessage";
-    case "SMS":
-      return "sms";
-    case "RCS":
-      return "rcs";
+    case 'iMessage':
+      return 'imessage';
+    case 'SMS':
+      return 'sms';
+    case 'RCS':
+      return 'rcs';
     default:
-      return "unknown";
+      return 'unknown';
   }
 }
 
 function mapStatus(message: PhotonMessage): IMessageStatus {
-  if (message.sendErrorCode !== 0 || message.isCorrupt) return "failed";
-  if (message.dateRead !== undefined) return "read";
+  if (message.sendErrorCode !== 0 || message.isCorrupt) return 'failed';
+  if (message.dateRead !== undefined) return 'read';
   if (message.dateDelivered !== undefined || message.isDelivered) {
-    return "delivered";
+    return 'delivered';
   }
-  if (message.isSent) return "sent";
-  return "pending";
+  if (message.isSent) return 'sent';
+  return 'pending';
 }
 
 function providerStatus(message: PhotonMessage): string {
-  if (message.dateRetracted !== undefined) return "unsent";
+  if (message.dateRetracted !== undefined) return 'unsent';
   if (message.sendErrorCode !== 0) return `error:${message.sendErrorCode}`;
   return mapStatus(message);
 }
 
-function attachmentKind(mimeType: string): IMessageAttachment["kind"] {
-  if (mimeType.startsWith("image/")) return "image";
-  if (mimeType.startsWith("video/")) return "video";
-  return "file";
+function attachmentKind(mimeType: string): IMessageAttachment['kind'] {
+  if (mimeType.startsWith('image/')) return 'image';
+  if (mimeType.startsWith('video/')) return 'video';
+  return 'file';
 }
 
 function mapAttachment(
-  attachment: PhotonMessage["content"]["attachments"][number],
+  attachment: PhotonMessage['content']['attachments'][number],
 ): IMessageAttachment {
   return {
     kind: attachmentKind(attachment.mimeType),
@@ -237,41 +234,35 @@ function mapAttachment(
 function mapConversation(chat: Chat): ProviderConversation {
   return {
     providerConversationId: chat.guid,
-    participants: chat.participants.map((participant) =>
-      address(participant.address),
-    ),
+    participants: chat.participants.map((participant) => address(participant.address)),
     raw: chat,
   };
 }
 
-function replyReference(message: PhotonMessage):
-  | { readonly messageId: string; readonly partIndex?: number }
-  | undefined {
+function replyReference(
+  message: PhotonMessage,
+): { readonly messageId: string; readonly partIndex?: number } | undefined {
   const messageId = message.replyTargetGuid ?? message.threadOriginatorGuid;
   if (messageId === undefined) return undefined;
   const rawPart = message.threadOriginatorPart;
   const partIndex = rawPart === undefined ? undefined : Number(rawPart);
   return {
     messageId,
-    ...(partIndex !== undefined && Number.isInteger(partIndex)
-      ? { partIndex }
-      : {}),
+    ...(partIndex !== undefined && Number.isInteger(partIndex) ? { partIndex } : {}),
   };
 }
 
 function messageText(content: MessageContent): string {
-  return content.text ?? "";
+  return content.text ?? '';
 }
 
-async function attachmentBytes(
-  attachment: IMessageAttachmentInput,
-): Promise<Uint8Array> {
+async function attachmentBytes(attachment: IMessageAttachmentInput): Promise<Uint8Array> {
   switch (attachment.source.type) {
-    case "bytes":
+    case 'bytes':
       return attachment.source.data;
-    case "blob":
+    case 'blob':
       return new Uint8Array(await attachment.source.data.arrayBuffer());
-    case "url": {
+    case 'url': {
       let response: Response;
       try {
         response = await fetch(attachment.source.url);
@@ -279,8 +270,8 @@ async function attachmentBytes(
         throw new ProviderUnavailableError(
           `Could not download Photon attachment ${attachment.source.url}.`,
           {
-            provider: "photon",
-            code: "attachment_download_failed",
+            provider: 'photon',
+            code: 'attachment_download_failed',
             retryable: true,
             raw: cause,
           },
@@ -290,8 +281,8 @@ async function attachmentBytes(
         throw new ProviderUnavailableError(
           `Attachment download failed with HTTP ${response.status}.`,
           {
-            provider: "photon",
-            code: "attachment_download_failed",
+            provider: 'photon',
+            code: 'attachment_download_failed',
             statusCode: response.status,
             retryable: response.status >= 500,
           },
@@ -306,42 +297,36 @@ function attachmentFilename(attachment: IMessageAttachmentInput): string {
   if (attachment.filename !== undefined && attachment.filename.length > 0) {
     return attachment.filename;
   }
-  if (attachment.source.type === "url") {
+  if (attachment.source.type === 'url') {
     try {
-      const name = new URL(attachment.source.url).pathname.split("/").at(-1);
+      const name = new URL(attachment.source.url).pathname.split('/').at(-1);
       if (name !== undefined && name.length > 0) return name;
     } catch {
       // The download produces the validation error with provider context.
     }
   }
   const extension =
-    attachment.kind === "image"
-      ? "jpg"
-      : attachment.kind === "video"
-        ? "mp4"
-        : "bin";
+    attachment.kind === 'image' ? 'jpg' : attachment.kind === 'video' ? 'mp4' : 'bin';
   return `attachment.${extension}`;
 }
 
-function mapReaction(
-  reaction: IMessageReaction,
-): SettableMessageReaction {
+function mapReaction(reaction: IMessageReaction): SettableMessageReaction {
   return { kind: reaction };
 }
 
 function normalizeReaction(
-  reaction: PhotonMessage["reaction"] | { readonly kind: string; readonly emoji?: string },
+  reaction: PhotonMessage['reaction'] | { readonly kind: string; readonly emoji?: string },
 ): IMessageReaction | undefined {
   switch (reaction?.kind) {
-    case "love":
-    case "like":
-    case "dislike":
-    case "laugh":
-    case "emphasize":
-    case "question":
+    case 'love':
+    case 'like':
+    case 'dislike':
+    case 'laugh':
+    case 'emphasize':
+    case 'question':
       return reaction.kind;
-    case "emoji":
-      return normalizeWebhookReaction(reaction.emoji ?? "");
+    case 'emoji':
+      return normalizeWebhookReaction(reaction.emoji ?? '');
     default:
       return undefined;
   }
@@ -349,27 +334,27 @@ function normalizeReaction(
 
 function normalizeWebhookReaction(value: string): IMessageReaction | undefined {
   switch (value.toLowerCase()) {
-    case "love":
-    case "❤️":
-    case "❤":
-      return "love";
-    case "like":
-    case "👍":
-      return "like";
-    case "dislike":
-    case "👎":
-      return "dislike";
-    case "laugh":
-    case "😂":
-      return "laugh";
-    case "emphasize":
-    case "‼️":
-    case "!!":
-      return "emphasize";
-    case "question":
-    case "❓":
-    case "?":
-      return "question";
+    case 'love':
+    case '❤️':
+    case '❤':
+      return 'love';
+    case 'like':
+    case '👍':
+      return 'like';
+    case 'dislike':
+    case '👎':
+      return 'dislike';
+    case 'laugh':
+    case '😂':
+      return 'laugh';
+    case 'emphasize':
+    case '‼️':
+    case '!!':
+      return 'emphasize';
+    case 'question':
+    case '❓':
+    case '?':
+      return 'question';
     default:
       return undefined;
   }
@@ -378,11 +363,9 @@ function normalizeWebhookReaction(value: string): IMessageReaction | undefined {
 function errorOptions(error: unknown) {
   const photon = error instanceof PhotonError ? error : undefined;
   return {
-    provider: "photon",
+    provider: 'photon',
     ...(photon?.code === undefined ? {} : { code: photon.code }),
-    ...(photon?.retryable === undefined
-      ? {}
-      : { retryable: photon.retryable }),
+    ...(photon?.retryable === undefined ? {} : { retryable: photon.retryable }),
     raw: error,
   } as const;
 }
@@ -390,23 +373,21 @@ function errorOptions(error: unknown) {
 function mapError(error: unknown, operation: string): never {
   if (error instanceof IMessageSDKError) throw error;
   if (
-    (error instanceof PhotonError && error.code === "duplicateMessage") ||
+    (error instanceof PhotonError && error.code === 'duplicateMessage') ||
     (error instanceof Error &&
-      /operation already processed with this client message id/i.test(
-        error.message,
-      ))
+      /operation already processed with this client message id/i.test(error.message))
   ) {
     throw new ConflictError(
-      "Photon already processed this idempotency key; the duplicate operation was not sent again.",
+      'Photon already processed this idempotency key; the duplicate operation was not sent again.',
       {
         ...errorOptions(error),
-        code: "duplicate_message",
+        code: 'duplicate_message',
       },
     );
   }
   if (error instanceof SpectrumCloudError) {
     const options = {
-      provider: "photon",
+      provider: 'photon',
       code: error.code,
       statusCode: error.status,
       raw: error,
@@ -430,14 +411,14 @@ function mapError(error: unknown, operation: string): never {
   }
   if (error instanceof PhotonAuthenticationError) {
     if (
-      error.code === "unauthorized" &&
+      error.code === 'unauthorized' &&
       /target not allowed for this project/i.test(error.message)
     ) {
       throw new AuthenticationError(
-        "Photon rejected this recipient because the target is not allowed for the Spectrum project. Use a permitted or opted-in project user; initiating a conversation with a new contact requires a Photon plan that supports cold outreach.",
+        'Photon rejected this recipient because the target is not allowed for the Spectrum project. Use a permitted or opted-in project user; initiating a conversation with a new contact requires a Photon plan that supports cold outreach.',
         {
           ...errorOptions(error),
-          code: "photon_target_not_allowed",
+          code: 'photon_target_not_allowed',
         },
       );
     }
@@ -453,10 +434,10 @@ function mapError(error: unknown, operation: string): never {
     throw new ValidationError(error.message, errorOptions(error));
   }
   if (error instanceof PhotonConnectionError) {
-    if (operation === "messages.send") {
+    if (operation === 'messages.send') {
       throw new AmbiguousDeliveryError(
-        "The Photon send result is unknown; retry only with the same idempotency key.",
-        { ...errorOptions(error), code: "ambiguous_delivery", retryable: true },
+        'The Photon send result is unknown; retry only with the same idempotency key.',
+        { ...errorOptions(error), code: 'ambiguous_delivery', retryable: true },
       );
     }
     throw new ProviderUnavailableError(error.message, {
@@ -467,22 +448,20 @@ function mapError(error: unknown, operation: string): never {
   const message = error instanceof Error ? error.message : `Photon ${operation} failed.`;
   if (/unknown server error occurred/i.test(message)) {
     throw new ProviderUnavailableError(message, {
-      provider: "photon",
-      code: "photon_server_error",
+      provider: 'photon',
+      code: 'photon_server_error',
       retryable: true,
       raw: error,
     });
   }
   throw new IMessageSDKError(message, {
-    provider: "photon",
-    code: "photon_error",
+    provider: 'photon',
+    code: 'photon_error',
     raw: error,
   });
 }
 
-async function createCloudConnection(
-  options: PhotonOptions,
-): Promise<CloudConnection> {
+async function createCloudConnection(options: PhotonOptions): Promise<CloudConnection> {
   const projectId = options.projectId;
   const projectSecret = options.projectSecret;
   if (
@@ -492,25 +471,21 @@ async function createCloudConnection(
     projectSecret.length === 0
   ) {
     throw new AuthenticationError(
-      "Photon project credentials are required. Pass projectId and projectSecret or set PHOTON_PROJECT_ID and PHOTON_PROJECT_SECRET.",
-      { provider: "photon", code: "missing_project_credentials" },
+      'Photon project credentials are required. Pass projectId and projectSecret or set PHOTON_PROJECT_ID and PHOTON_PROJECT_SECRET.',
+      { provider: 'photon', code: 'missing_project_credentials' },
     );
   }
-  let tokenData = await cloud.issueImessageTokens(
-    projectId,
-    projectSecret,
-  );
+  let tokenData = await cloud.issueImessageTokens(projectId, projectSecret);
   let expiresAt = Date.now() + tokenData.expiresIn * 1_000;
   let renewalTimer: ReturnType<typeof setTimeout> | undefined;
   let closed = false;
 
   const selectLine = (data: TokenData): PhotonLine => {
-    if (data.type === "shared") {
-      return { phone: SHARED_PHONE, instanceId: "shared", type: "shared" };
+    if (data.type === 'shared') {
+      return { phone: SHARED_PHONE, instanceId: 'shared', type: 'shared' };
     }
-    const lines = Object.entries(data.numbers).flatMap(
-      ([instanceId, phone]) =>
-        phone === null ? [] : [{ phone, instanceId, type: "dedicated" as const }],
+    const lines = Object.entries(data.numbers).flatMap(([instanceId, phone]) =>
+      phone === null ? [] : [{ phone, instanceId, type: 'dedicated' as const }],
     );
     if (options.phone !== undefined) {
       const selected = lines.find((line) => line.phone === options.phone);
@@ -518,8 +493,8 @@ async function createCloudConnection(
         throw new ValidationError(
           `Photon phone ${options.phone} is not available to this Spectrum project.`,
           {
-            provider: "photon",
-            code: "photon_phone_not_found",
+            provider: 'photon',
+            code: 'photon_phone_not_found',
             raw: { availablePhones: lines.map((line) => line.phone) },
           },
         );
@@ -528,10 +503,10 @@ async function createCloudConnection(
     }
     if (lines.length !== 1 || lines[0] === undefined) {
       throw new ValidationError(
-        "Photon phone is required when the Spectrum project does not have exactly one dedicated line.",
+        'Photon phone is required when the Spectrum project does not have exactly one dedicated line.',
         {
-          provider: "photon",
-          code: "photon_phone_required",
+          provider: 'photon',
+          code: 'photon_phone_required',
           raw: { availablePhones: lines.map((line) => line.phone) },
         },
       );
@@ -566,9 +541,9 @@ async function createCloudConnection(
       .then((next) => {
         const nextLine = selectLine(next);
         if (nextLine.instanceId !== line.instanceId) {
-          throw new ValidationError("The selected Photon line changed during token renewal.", {
-            provider: "photon",
-            code: "photon_line_changed",
+          throw new ValidationError('The selected Photon line changed during token renewal.', {
+            provider: 'photon',
+            code: 'photon_line_changed',
           });
         }
         tokenData = next;
@@ -583,22 +558,19 @@ async function createCloudConnection(
 
   const getToken = async (): Promise<string> => {
     if (Date.now() >= expiresAt - TOKEN_EXPIRY_BUFFER_MS) await refresh();
-    if (tokenData.type === "shared") return tokenData.token;
+    if (tokenData.type === 'shared') return tokenData.token;
     const token = tokenData.auth[line.instanceId];
     if (token === undefined) {
-      throw new AuthenticationError("Photon did not issue a token for the selected line.", {
-        provider: "photon",
-        code: "photon_line_token_missing",
+      throw new AuthenticationError('Photon did not issue a token for the selected line.', {
+        provider: 'photon',
+        code: 'photon_line_token_missing',
       });
     }
     return token;
   };
 
   const client = createClient({
-    address:
-      line.type === "shared"
-        ? SHARED_ADDRESS
-        : `${line.instanceId}.imsg.photon.codes:443`,
+    address: line.type === 'shared' ? SHARED_ADDRESS : `${line.instanceId}.imsg.photon.codes:443`,
     token: getToken,
     tls: true,
     retry: options.retry ?? true,
@@ -631,25 +603,23 @@ function constantTimeEqual(left: string, right: string): boolean {
 async function hmacSha256(secret: string, value: string): Promise<string> {
   const encoder = new TextEncoder();
   const key = await crypto.subtle.importKey(
-    "raw",
+    'raw',
     encoder.encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
+    { name: 'HMAC', hash: 'SHA-256' },
     false,
-    ["sign"],
+    ['sign'],
   );
-  const result = await crypto.subtle.sign("HMAC", key, encoder.encode(value));
-  return Array.from(new Uint8Array(result), (byte) =>
-    byte.toString(16).padStart(2, "0"),
-  ).join("");
+  const result = await crypto.subtle.sign('HMAC', key, encoder.encode(value));
+  return Array.from(new Uint8Array(result), (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
 function webhookAttachments(
-  content: z.infer<typeof WebhookMessageSchema>["content"],
+  content: z.infer<typeof WebhookMessageSchema>['content'],
 ): IMessageAttachment[] {
   const values =
-    content.type === "attachment"
+    content.type === 'attachment'
       ? [content]
-      : content.type === "group"
+      : content.type === 'group'
         ? content.items.map((item) => item.content)
         : [];
   return values.map((item) => ({
@@ -664,12 +634,10 @@ function webhookAttachments(
 
 /** Creates a Photon provider backed by a Spectrum Cloud project. */
 export function photon(options: PhotonOptions = {}): PhotonProvider {
-  const projectId = options.projectId ?? process.env["PHOTON_PROJECT_ID"];
-  const projectSecret =
-    options.projectSecret ?? process.env["PHOTON_PROJECT_SECRET"];
-  const phone = options.phone ?? process.env["PHOTON_PHONE_NUMBER"];
-  const webhookSecret =
-    options.webhookSecret ?? process.env["PHOTON_WEBHOOK_SECRET"];
+  const projectId = options.projectId ?? process.env['PHOTON_PROJECT_ID'];
+  const projectSecret = options.projectSecret ?? process.env['PHOTON_PROJECT_SECRET'];
+  const phone = options.phone ?? process.env['PHOTON_PHONE_NUMBER'];
+  const webhookSecret = options.webhookSecret ?? process.env['PHOTON_WEBHOOK_SECRET'];
   const config: PhotonOptions = {
     ...options,
     ...(projectId === undefined ? {} : { projectId }),
@@ -686,7 +654,10 @@ export function photon(options: PhotonOptions = {}): PhotonProvider {
     return connectionPromise;
   };
 
-  const run = async <T>(operation: string, fn: (value: CloudConnection) => Promise<T>): Promise<T> => {
+  const run = async <T>(
+    operation: string,
+    fn: (value: CloudConnection) => Promise<T>,
+  ): Promise<T> => {
     try {
       return await fn(await connection());
     } catch (error) {
@@ -707,8 +678,7 @@ export function photon(options: PhotonOptions = {}): PhotonProvider {
     message: PhotonMessage,
     fallbackConversationId?: string,
   ): Promise<ProviderMessage> => {
-    const conversationId =
-      fallbackConversationId ?? message.chatGuids[0] ?? "unknown";
+    const conversationId = fallbackConversationId ?? message.chatGuids[0] ?? 'unknown';
     let chat: Chat | undefined;
     try {
       chat = await getChat(client, conversationId);
@@ -716,19 +686,17 @@ export function photon(options: PhotonOptions = {}): PhotonProvider {
       chat = undefined;
     }
     const line = (await connection()).line;
-    const direction = message.isFromMe ? "outbound" : "inbound";
+    const direction = message.isFromMe ? 'outbound' : 'inbound';
     const ownAddress = address(line.phone);
     const sender =
-      direction === "outbound"
+      direction === 'outbound'
         ? ownAddress
         : message.sender === undefined
-          ? address("unknown")
+          ? address('unknown')
           : address(message.sender.address);
     const recipients =
-      direction === "outbound"
-        ? (chat?.participants.map((participant) =>
-            address(participant.address),
-          ) ?? [])
+      direction === 'outbound'
+        ? (chat?.participants.map((participant) => address(participant.address)) ?? [])
         : [ownAddress];
     const replyTo = replyReference(message);
     return {
@@ -740,14 +708,12 @@ export function photon(options: PhotonOptions = {}): PhotonProvider {
       text: messageText(message.content),
       attachments: message.content.attachments.map(mapAttachment),
       ...(replyTo === undefined ? {} : { replyTo }),
-      service: mapService(chat?.service ?? message.sender?.service ?? "iMessage"),
+      service: mapService(chat?.service ?? message.sender?.service ?? 'iMessage'),
       status: mapStatus(message),
       providerStatus: providerStatus(message),
       createdAt: message.dateCreated,
       ...(message.isSent ? { sentAt: message.dateCreated } : {}),
-      ...(message.dateDelivered === undefined
-        ? {}
-        : { deliveredAt: message.dateDelivered }),
+      ...(message.dateDelivered === undefined ? {} : { deliveredAt: message.dateDelivered }),
       ...(message.dateRead === undefined ? {} : { readAt: message.dateRead }),
       raw: message,
     };
@@ -761,23 +727,20 @@ export function photon(options: PhotonOptions = {}): PhotonProvider {
       return await mapMessage(client, await client.messages.get(event.messageGuid), event.chatGuid);
     } catch {
       const line = (await connection()).line;
-      const text = event.type === "message.edited" ? messageText(event.content) : "";
+      const text = event.type === 'message.edited' ? messageText(event.content) : '';
       return {
         providerMessageId: event.messageGuid,
         conversationId: event.chatGuid,
-        direction: event.isFromMe ? "outbound" : "inbound",
-        sender:
-          event.actor === undefined
-            ? address(line.phone)
-            : address(event.actor.address),
+        direction: event.isFromMe ? 'outbound' : 'inbound',
+        sender: event.actor === undefined ? address(line.phone) : address(event.actor.address),
         recipients: [],
         text,
         attachments: [],
-        service: mapService(event.actor?.service ?? "iMessage"),
-        status: event.type === "message.read" ? "read" : "sent",
+        service: mapService(event.actor?.service ?? 'iMessage'),
+        status: event.type === 'message.read' ? 'read' : 'sent',
         providerStatus: event.type,
         createdAt: event.occurredAt,
-        ...(event.type === "message.read" ? { readAt: event.readAt } : {}),
+        ...(event.type === 'message.read' ? { readAt: event.readAt } : {}),
         raw: event,
       };
     }
@@ -794,62 +757,54 @@ export function photon(options: PhotonOptions = {}): PhotonProvider {
       raw: event,
     } as const;
     switch (event.type) {
-      case "message.received":
+      case 'message.received':
         return {
           ...base,
-          type: event.isFromMe ? "message.sent" : "message.received",
+          type: event.isFromMe ? 'message.sent' : 'message.received',
           message: await mapMessage(client, event.message, event.chatGuid),
         };
-      case "message.edited":
+      case 'message.edited':
         return {
           ...base,
-          type: "message.edited",
+          type: 'message.edited',
           message: await syntheticEventMessage(client, event),
         };
-      case "message.read":
+      case 'message.read':
         return {
           ...base,
-          type: "message.read",
+          type: 'message.read',
           message: await syntheticEventMessage(client, event),
         };
-      case "message.unsent":
+      case 'message.unsent':
         return {
           ...base,
-          type: "message.deleted",
+          type: 'message.deleted',
           conversationId: event.chatGuid,
           messageId: event.messageGuid,
         };
-      case "message.reactionAdded":
-      case "message.reactionRemoved": {
+      case 'message.reactionAdded':
+      case 'message.reactionRemoved': {
         const reaction = normalizeReaction(event.reaction);
         if (reaction === undefined) return undefined;
         const line = (await connection()).line;
         return {
           ...base,
-          type:
-            event.type === "message.reactionAdded"
-              ? "reaction.added"
-              : "reaction.removed",
+          type: event.type === 'message.reactionAdded' ? 'reaction.added' : 'reaction.removed',
           conversationId: event.chatGuid,
           messageId: event.messageGuid,
-          actor:
-            event.actor === undefined
-              ? address(line.phone)
-              : address(event.actor.address),
+          actor: event.actor === undefined ? address(line.phone) : address(event.actor.address),
           reaction,
-          ...(event.targetPartIndex === undefined
-            ? {}
-            : { partIndex: event.targetPartIndex }),
+          ...(event.targetPartIndex === undefined ? {} : { partIndex: event.targetPartIndex }),
         };
       }
-      case "message.stickerPlaced":
+      case 'message.stickerPlaced':
         return undefined;
     }
   };
 
   const messages: PhotonMessages = {
     async send(input): Promise<ProviderSentMessage> {
-      return run("messages.send", async ({ client }) => {
+      return run('messages.send', async ({ client }) => {
         let chatId = input.conversationId;
         if (chatId === undefined) {
           const recipients = Array.isArray(input.to) ? input.to : [input.to];
@@ -880,22 +835,16 @@ export function photon(options: PhotonOptions = {}): PhotonProvider {
           }),
         );
         const common = {
-          ...(input.idempotencyKey === undefined
-            ? {}
-            : { clientMessageId: input.idempotencyKey }),
+          ...(input.idempotencyKey === undefined ? {} : { clientMessageId: input.idempotencyKey }),
           ...(replyTo === undefined ? {} : { replyTo }),
         };
         let sent: PhotonMessage;
         if (uploaded.length === 0) {
-          sent = await client.messages.sendText(chatId, input.text ?? "", common);
+          sent = await client.messages.sendText(chatId, input.text ?? '', common);
         } else if (uploaded.length === 1 && input.text === undefined) {
           const first = uploaded[0];
-          if (first === undefined) throw new ValidationError("Attachment upload failed.");
-          sent = await client.messages.sendAttachment(
-            chatId,
-            first.attachment.guid,
-            common,
-          );
+          if (first === undefined) throw new ValidationError('Attachment upload failed.');
+          sent = await client.messages.sendAttachment(chatId, first.attachment.guid, common);
         } else {
           sent = await client.messages.sendMultipart(
             chatId,
@@ -915,7 +864,7 @@ export function photon(options: PhotonOptions = {}): PhotonProvider {
 
     async get(message) {
       try {
-        return await run("messages.get", async ({ client }) =>
+        return await run('messages.get', async ({ client }) =>
           mapMessage(client, await client.messages.get(message.messageId), message.conversationId),
         );
       } catch (error) {
@@ -923,12 +872,11 @@ export function photon(options: PhotonOptions = {}): PhotonProvider {
         throw error;
       }
     },
-
   };
 
   const conversations: PhotonConversations = {
     async open(input) {
-      return run("conversations.open", async ({ client }) => {
+      return run('conversations.open', async ({ client }) => {
         const result = await client.chats.create(
           input.participants.map((participant) => participant.value),
         );
@@ -939,7 +887,7 @@ export function photon(options: PhotonOptions = {}): PhotonProvider {
 
     async get(id) {
       try {
-        return await run("conversations.get", async ({ client }) =>
+        return await run('conversations.get', async ({ client }) =>
           mapConversation(await getChat(client, id)),
         );
       } catch (error) {
@@ -949,7 +897,7 @@ export function photon(options: PhotonOptions = {}): PhotonProvider {
     },
 
     async markRead(id) {
-      await run("conversations.markRead", async ({ client }) => {
+      await run('conversations.markRead', async ({ client }) => {
         await client.chats.markRead(id);
       });
     },
@@ -965,7 +913,7 @@ export function photon(options: PhotonOptions = {}): PhotonProvider {
           const abort = (): void => {
             void live.close();
           };
-          subscribeOptions.signal?.addEventListener("abort", abort, {
+          subscribeOptions.signal?.addEventListener('abort', abort, {
             once: true,
           });
           const seen = new Set<number>();
@@ -976,8 +924,8 @@ export function photon(options: PhotonOptions = {}): PhotonProvider {
               const cursor = Number(subscribeOptions.cursor);
               if (!Number.isSafeInteger(cursor) || cursor < 0) {
                 throw new ValidationError(
-                  "Photon event cursor must be a non-negative integer sequence.",
-                  { provider: "photon", code: "invalid_event_cursor" },
+                  'Photon event cursor must be a non-negative integer sequence.',
+                  { provider: 'photon', code: 'invalid_event_cursor' },
                 );
               }
               const catchUp = client.events.catchUp(cursor);
@@ -985,8 +933,8 @@ export function photon(options: PhotonOptions = {}): PhotonProvider {
               try {
                 for await (const event of catchUp) {
                   if (subscribeOptions.signal?.aborted === true) return;
-                  if (event.type === "catchup.complete") break;
-                  if (!event.type.startsWith("message.")) continue;
+                  if (event.type === 'catchup.complete') break;
+                  if (!event.type.startsWith('message.')) continue;
                   const messageEvent = event as MessageEvent;
                   seen.add(messageEvent.sequence);
                   const mapped = await mapStreamEvent(client, messageEvent);
@@ -1008,9 +956,9 @@ export function photon(options: PhotonOptions = {}): PhotonProvider {
               if (mapped !== undefined) yield mapped;
             }
           } catch (error) {
-            mapError(error, "events.subscribe");
+            mapError(error, 'events.subscribe');
           } finally {
-            subscribeOptions.signal?.removeEventListener("abort", abort);
+            subscribeOptions.signal?.removeEventListener('abort', abort);
             activeStreams.delete(live as TypedEventStream<unknown>);
             await live.close();
           }
@@ -1021,13 +969,13 @@ export function photon(options: PhotonOptions = {}): PhotonProvider {
   };
 
   return defineProvider({
-    name: "photon",
+    name: 'photon',
     capabilities: PHOTON_CAPABILITIES,
     messages,
     conversations,
     reactions: {
       async add(input) {
-        await run("reactions.add", async ({ client }) => {
+        await run('reactions.add', async ({ client }) => {
           await client.messages.setReaction(
             input.conversationId,
             input.messageId,
@@ -1038,7 +986,7 @@ export function photon(options: PhotonOptions = {}): PhotonProvider {
         });
       },
       async remove(input) {
-        await run("reactions.remove", async ({ client }) => {
+        await run('reactions.remove', async ({ client }) => {
           await client.messages.setReaction(
             input.conversationId,
             input.messageId,
@@ -1051,12 +999,12 @@ export function photon(options: PhotonOptions = {}): PhotonProvider {
     },
     typing: {
       async start(id) {
-        await run("typing.start", async ({ client }) => {
+        await run('typing.start', async ({ client }) => {
           await client.chats.setTyping(id, true);
         });
       },
       async stop(id) {
-        await run("typing.stop", async ({ client }) => {
+        await run('typing.stop', async ({ client }) => {
           await client.chats.setTyping(id, false);
         });
       },
@@ -1064,32 +1012,29 @@ export function photon(options: PhotonOptions = {}): PhotonProvider {
     webhooks: {
       async verify(request) {
         if (config.webhookSecret === undefined) return false;
-        const timestamp = request.headers.get("x-spectrum-timestamp");
-        const signature = request.headers.get("x-spectrum-signature");
+        const timestamp = request.headers.get('x-spectrum-timestamp');
+        const signature = request.headers.get('x-spectrum-signature');
         if (timestamp === null || signature === null) return false;
         const numericTimestamp = Number(timestamp);
         const age = Math.abs(Math.floor(Date.now() / 1_000) - numericTimestamp);
         if (!Number.isFinite(age) || age > WEBHOOK_TOLERANCE_SECONDS) return false;
         const rawBody = await request.text();
-        const digest = await hmacSha256(
-          config.webhookSecret,
-          `v0:${timestamp}:${rawBody}`,
-        );
+        const digest = await hmacSha256(config.webhookSecret, `v0:${timestamp}:${rawBody}`);
         return constantTimeEqual(`v0=${digest}`, signature.toLowerCase());
       },
       async parse(request) {
         const parsed = WebhookPayloadSchema.safeParse(await request.json());
         if (!parsed.success) return [];
         const { message, space } = parsed.data;
-        if (message.content.type === "reaction") {
+        if (message.content.type === 'reaction') {
           const reaction = normalizeWebhookReaction(message.content.emoji);
           if (reaction === undefined) return [];
-          const providerEventId = request.headers.get("x-spectrum-webhook-id");
+          const providerEventId = request.headers.get('x-spectrum-webhook-id');
           return [
             {
               id: message.id,
               ...(providerEventId === null ? {} : { providerEventId }),
-              type: "reaction.added",
+              type: 'reaction.added',
               timestamp: new Date(message.timestamp),
               conversationId: space.id,
               messageId: message.content.target.id,
@@ -1100,24 +1045,24 @@ export function photon(options: PhotonOptions = {}): PhotonProvider {
           ];
         }
         const own = address(space.phone ?? config.phone ?? SHARED_PHONE);
-        const providerEventId = request.headers.get("x-spectrum-webhook-id");
+        const providerEventId = request.headers.get('x-spectrum-webhook-id');
         return [
           {
             id: message.id,
             ...(providerEventId === null ? {} : { providerEventId }),
-            type: "message.received",
+            type: 'message.received',
             timestamp: new Date(message.timestamp),
             message: {
               providerMessageId: message.id,
               conversationId: space.id,
-              direction: "inbound",
+              direction: 'inbound',
               sender: address(message.sender.id),
               recipients: [own],
-              text: message.content.type === "text" ? message.content.text : "",
+              text: message.content.type === 'text' ? message.content.text : '',
               attachments: webhookAttachments(message.content),
-              service: "imessage",
-              status: "delivered",
-              providerStatus: "received",
+              service: 'imessage',
+              status: 'delivered',
+              providerStatus: 'received',
               createdAt: new Date(message.timestamp),
               raw: message,
             },
@@ -1133,9 +1078,7 @@ export function photon(options: PhotonOptions = {}): PhotonProvider {
       },
     },
     async close() {
-      await Promise.all(
-        [...activeStreams].map(async (stream) => await stream.close()),
-      );
+      await Promise.all([...activeStreams].map(async (stream) => await stream.close()));
       activeStreams.clear();
       if (connectionPromise !== undefined) {
         await (await connectionPromise).close();

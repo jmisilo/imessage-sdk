@@ -1,20 +1,21 @@
-import process from "node:process";
+import process from 'node:process';
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from 'vitest';
 
-import { createIMessageClient } from "../src/index.js";
-import { blooio } from "../src/providers/blooio.js";
+import { createIMessageClient } from 'imessage-sdk';
 
-const enabled = process.env["BLOOIO_LIVE_TEST"] === "1";
+import { blooio } from '../src/index.js';
 
-describe.skipIf(!enabled)("Blooio live API", () => {
-  it("exercises every Blooio v0.1 outbound operation", async () => {
-    const apiKey = required("BLOOIO_API_KEY");
-    const recipientValue = required("BLOOIO_TEST_RECIPIENT");
-    const imageUrl = required("BLOOIO_TEST_IMAGE_URL");
-    const videoUrl = required("BLOOIO_TEST_VIDEO_URL");
-    const fileUrl = required("BLOOIO_TEST_FILE_URL");
-    const requestedSender = process.env["BLOOIO_FROM_NUMBER"];
+const enabled = process.env['BLOOIO_LIVE_TEST'] === '1';
+
+describe.skipIf(!enabled)('Blooio live API', () => {
+  it('exercises every Blooio v0.1 outbound operation', async () => {
+    const apiKey = required('BLOOIO_API_KEY');
+    const recipientValue = required('BLOOIO_TEST_RECIPIENT');
+    const imageUrl = required('BLOOIO_TEST_IMAGE_URL');
+    const videoUrl = required('BLOOIO_TEST_VIDEO_URL');
+    const fileUrl = required('BLOOIO_TEST_FILE_URL');
+    const requestedSender = process.env['BLOOIO_FROM_NUMBER'];
 
     const recipient = { kind: addressKind(recipientValue), value: recipientValue } as const;
     const discoveryProvider = blooio({ apiKey });
@@ -22,7 +23,7 @@ describe.skipIf(!enabled)("Blooio live API", () => {
     const activeNumbers = numbers.filter((number) => number.active);
     if (activeNumbers.length === 0) {
       throw new Error(
-        "This Blooio API key has no active linked number. Link a number to the API key in Dashboard → Numbers, then rerun the test.",
+        'This Blooio API key has no active linked number. Link a number to the API key in Dashboard → Numbers, then rerun the test.',
       );
     }
     const senderValue = requestedSender ?? activeNumbers[0]?.phoneNumber;
@@ -31,15 +32,15 @@ describe.skipIf(!enabled)("Blooio live API", () => {
       !activeNumbers.some((number) => number.phoneNumber === senderValue)
     ) {
       throw new Error(
-        `BLOOIO_FROM_NUMBER=${requestedSender ?? "<unset>"} is not active for this API key. Active numbers: ${activeNumbers.map((number) => number.phoneNumber).join(", ")}`,
+        `BLOOIO_FROM_NUMBER=${requestedSender ?? '<unset>'} is not active for this API key. Active numbers: ${activeNumbers.map((number) => number.phoneNumber).join(', ')}`,
       );
     }
     const provider = blooio({
       apiKey,
-      sender: { kind: "phone", value: senderValue },
+      sender: { kind: 'phone', value: senderValue },
     });
     const client = createIMessageClient({
-      connectionId: "blooio-live",
+      connectionId: 'blooio-live',
       provider,
     });
     const run = `${Date.now()}`;
@@ -61,17 +62,17 @@ describe.skipIf(!enabled)("Blooio live API", () => {
     });
     const attachment = await client.messages.send({
       conversationId: conversation.id,
-      text: "Public URL attachment test",
+      text: 'Public URL attachment test',
       attachments: [
-        { kind: "image", source: { type: "url", url: imageUrl } },
-        { kind: "video", source: { type: "url", url: videoUrl } },
-        { kind: "file", source: { type: "url", url: fileUrl } },
+        { kind: 'image', source: { type: 'url', url: imageUrl } },
+        { kind: 'video', source: { type: 'url', url: videoUrl } },
+        { kind: 'file', source: { type: 'url', url: fileUrl } },
       ],
       idempotencyKey: `imessage-sdk-${run}-attachments`,
     });
     const reply = await client.messages.send({
       conversationId: conversation.id,
-      text: "Thread reply test",
+      text: 'Thread reply test',
       replyTo: { messageId: text.providerMessageId },
       idempotencyKey: `imessage-sdk-${run}-reply`,
     });
@@ -86,8 +87,8 @@ describe.skipIf(!enabled)("Blooio live API", () => {
     await client.typing.start(conversation.id);
     await new Promise<void>((resolve) => setTimeout(resolve, 2_000));
     await client.typing.stop(conversation.id);
-    await client.reactions.add({ ...locator, reaction: "like" });
-    await client.reactions.remove({ ...locator, reaction: "like" });
+    await client.reactions.add({ ...locator, reaction: 'like' });
+    await client.reactions.remove({ ...locator, reaction: 'like' });
     await client.conversations.markRead(conversation.id);
 
     expect(text.providerMessageId).toBeTruthy();
@@ -107,8 +108,8 @@ function required(name: string): string {
   return value;
 }
 
-function addressKind(value: string): "phone" | "email" {
-  return value.includes("@") ? "email" : "phone";
+function addressKind(value: string): 'phone' | 'email' {
+  return value.includes('@') ? 'email' : 'phone';
 }
 
 async function waitUntilSent(
@@ -117,17 +118,13 @@ async function waitUntilSent(
 ): Promise<void> {
   for (let attempt = 0; attempt < 30; attempt += 1) {
     const status = await provider.messages.getStatus(locator);
-    if (
-      status?.status === "sent" ||
-      status?.status === "delivered" ||
-      status?.status === "read"
-    ) {
+    if (status?.status === 'sent' || status?.status === 'delivered' || status?.status === 'read') {
       return;
     }
-    if (status?.status === "failed") {
-      throw new Error(`Blooio test message failed: ${status.error ?? "unknown"}`);
+    if (status?.status === 'failed') {
+      throw new Error(`Blooio test message failed: ${status.error ?? 'unknown'}`);
     }
     await new Promise<void>((resolve) => setTimeout(resolve, 2_000));
   }
-  throw new Error("Blooio test message was not sent within 60 seconds.");
+  throw new Error('Blooio test message was not sent within 60 seconds.');
 }

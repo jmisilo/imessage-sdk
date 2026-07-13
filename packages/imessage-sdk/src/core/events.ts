@@ -4,7 +4,7 @@ import type {
   IMessageReaction,
   Message,
   ProviderMessage,
-} from "./types.js";
+} from './types.js';
 
 export interface ProviderEventBase<TType extends string> {
   readonly id: string;
@@ -15,12 +15,12 @@ export interface ProviderEventBase<TType extends string> {
 }
 
 export type ProviderMessageEventType =
-  | "message.received"
-  | "message.sent"
-  | "message.delivered"
-  | "message.read"
-  | "message.failed"
-  | "message.edited";
+  | 'message.received'
+  | 'message.sent'
+  | 'message.delivered'
+  | 'message.read'
+  | 'message.failed'
+  | 'message.edited';
 
 export interface ProviderMessageEvent<
   TType extends ProviderMessageEventType = ProviderMessageEventType,
@@ -28,13 +28,12 @@ export interface ProviderMessageEvent<
   readonly message: ProviderMessage;
 }
 
-export interface ProviderMessageDeletedEvent
-  extends ProviderEventBase<"message.deleted"> {
+export interface ProviderMessageDeletedEvent extends ProviderEventBase<'message.deleted'> {
   readonly conversationId: string;
   readonly messageId: string;
 }
 
-export type ProviderReactionEventType = "reaction.added" | "reaction.removed";
+export type ProviderReactionEventType = 'reaction.added' | 'reaction.removed';
 
 export interface ProviderReactionEvent<
   TType extends ProviderReactionEventType = ProviderReactionEventType,
@@ -46,7 +45,7 @@ export interface ProviderReactionEvent<
   readonly partIndex?: number;
 }
 
-export type ProviderTypingEventType = "typing.started" | "typing.stopped";
+export type ProviderTypingEventType = 'typing.started' | 'typing.stopped';
 
 export interface ProviderTypingEvent<
   TType extends ProviderTypingEventType = ProviderTypingEventType,
@@ -57,10 +56,7 @@ export interface ProviderTypingEvent<
 }
 
 export type ProviderEvent =
-  | ProviderMessageEvent
-  | ProviderMessageDeletedEvent
-  | ProviderReactionEvent
-  | ProviderTypingEvent;
+  ProviderMessageEvent | ProviderMessageDeletedEvent | ProviderReactionEvent | ProviderTypingEvent;
 
 export interface IMessageEventBase<
   TProvider extends IMessageProviderName,
@@ -82,7 +78,7 @@ export interface IMessageMessageEvent<
 export interface IMessageDeletedEvent<
   TProvider extends IMessageProviderName,
   TConnectionId extends string,
-> extends IMessageEventBase<TProvider, TConnectionId, "message.deleted"> {
+> extends IMessageEventBase<TProvider, TConnectionId, 'message.deleted'> {
   readonly conversationId: string;
   readonly messageId: string;
 }

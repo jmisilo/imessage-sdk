@@ -1,7 +1,7 @@
 /** Provider names stay literal through generics but are open to custom adapters. */
 export type IMessageProviderName = string;
 
-export type IMessageAddressKind = "phone" | "email";
+export type IMessageAddressKind = 'phone' | 'email';
 
 export interface IMessageAddress {
   readonly kind: IMessageAddressKind;
@@ -10,20 +10,20 @@ export interface IMessageAddress {
 
 export type NonEmptyReadonlyArray<T> = readonly [T, ...T[]];
 
-export type IMessageAttachmentKind = "image" | "video" | "file";
+export type IMessageAttachmentKind = 'image' | 'video' | 'file';
 
 export type IMessageAttachmentSource =
   | {
-      readonly type: "url";
+      readonly type: 'url';
       /** A URL that the selected provider can fetch. */
       readonly url: string;
     }
   | {
-      readonly type: "blob";
+      readonly type: 'blob';
       readonly data: Blob;
     }
   | {
-      readonly type: "bytes";
+      readonly type: 'bytes';
       readonly data: Uint8Array;
     };
 
@@ -63,9 +63,7 @@ type SendDestination =
     }
   | {
       readonly conversationId?: never;
-      readonly to:
-        | IMessageAddress
-        | NonEmptyReadonlyArray<IMessageAddress>;
+      readonly to: IMessageAddress | NonEmptyReadonlyArray<IMessageAddress>;
     };
 
 type SendContent =
@@ -89,17 +87,11 @@ export interface EditMessageInput {
   readonly text: string;
 }
 
-export type IMessageDirection = "inbound" | "outbound";
+export type IMessageDirection = 'inbound' | 'outbound';
 
-export type IMessageService = "imessage" | "sms" | "rcs" | "unknown";
+export type IMessageService = 'imessage' | 'sms' | 'rcs' | 'unknown';
 
-export type IMessageStatus =
-  | "pending"
-  | "accepted"
-  | "sent"
-  | "delivered"
-  | "read"
-  | "failed";
+export type IMessageStatus = 'pending' | 'accepted' | 'sent' | 'delivered' | 'read' | 'failed';
 
 /**
  * A provider-normalized message before the client adds connection identity.
@@ -126,14 +118,14 @@ export interface ProviderMessage {
 }
 
 export type ProviderSentMessage = ProviderMessage & {
-  readonly direction: "outbound";
+  readonly direction: 'outbound';
 };
 
 /** A message returned by a client bound to one provider connection. */
 export type Message<
   TProvider extends IMessageProviderName = IMessageProviderName,
   TConnectionId extends string = string,
-> = Omit<ProviderMessage, "conversationId"> & {
+> = Omit<ProviderMessage, 'conversationId'> & {
   /** Equal to providerMessageId in v0.1. */
   readonly id: string;
   /** Provider-native when available; otherwise a non-routable imsg-sdk-v1 fallback. */
@@ -146,7 +138,7 @@ export type SentMessage<
   TProvider extends IMessageProviderName = IMessageProviderName,
   TConnectionId extends string = string,
 > = Message<TProvider, TConnectionId> & {
-  readonly direction: "outbound";
+  readonly direction: 'outbound';
 };
 
 export interface OpenConversationInput {
@@ -171,13 +163,7 @@ export type Conversation<
   readonly connectionId: TConnectionId;
 };
 
-export type IMessageReaction =
-  | "love"
-  | "like"
-  | "dislike"
-  | "laugh"
-  | "emphasize"
-  | "question";
+export type IMessageReaction = 'love' | 'like' | 'dislike' | 'laugh' | 'emphasize' | 'question';
 
 export interface AddReactionInput extends MessageLocator {
   readonly reaction: IMessageReaction;

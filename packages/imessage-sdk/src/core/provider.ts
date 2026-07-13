@@ -1,5 +1,5 @@
-import type { IMessageCapabilities } from "./capabilities.js";
-import type { ProviderEvent } from "./events.js";
+import type { IMessageCapabilities } from './capabilities.js';
+import type { ProviderEvent } from './events.js';
 import type {
   AddReactionInput,
   EditMessageInput,
@@ -12,15 +12,12 @@ import type {
   RemoveReactionInput,
   SendMessageInput,
   SubscribeOptions,
-} from "./types.js";
+} from './types.js';
 
 export interface ProviderMessages {
   send(input: SendMessageInput): Promise<ProviderSentMessage>;
   get?(message: MessageLocator): Promise<ProviderMessage | null>;
-  edit?(
-    message: MessageLocator,
-    input: EditMessageInput,
-  ): Promise<ProviderMessage>;
+  edit?(message: MessageLocator, input: EditMessageInput): Promise<ProviderMessage>;
   delete?(message: MessageLocator): Promise<void>;
 }
 
@@ -70,10 +67,7 @@ export interface IMessageProvider<
   close?(): Promise<void>;
 }
 
-export type AnyIMessageProvider = IMessageProvider<
-  IMessageProviderName,
-  IMessageCapabilities
->;
+export type AnyIMessageProvider = IMessageProvider<IMessageProviderName, IMessageCapabilities>;
 
 /** Preserves the concrete name, capabilities, and methods of an adapter. */
 export function defineProvider<const TProvider extends AnyIMessageProvider>(
