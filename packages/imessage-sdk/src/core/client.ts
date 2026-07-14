@@ -74,6 +74,7 @@ export interface IMessageClient<
     stop(conversationId: string): Promise<void>;
   };
 
+  /** @experimental Webhook normalization may change before a future stable release. */
   readonly webhooks: {
     handle(
       request: Request,

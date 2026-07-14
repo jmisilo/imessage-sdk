@@ -109,6 +109,7 @@ export interface BlooioProvider extends IMessageProvider<'blooio', typeof BLOOIO
   readonly conversations: BlooioConversations;
   readonly reactions: ProviderReactions;
   readonly typing: Required<ProviderTyping>;
+  /** @experimental Webhook normalization may change before a future stable release. */
   readonly webhooks: ProviderWebhooks;
   readonly numbers: BlooioNumbers;
 }

@@ -1,0 +1,19 @@
+{
+  "name": "@imessage-sdk/example-basic-blooio",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Live Blooio example for imessage-sdk",
+  "type": "module",
+  "scripts": {
+    "build": "tsup",
+    "start": "pnpm build && node --env-file=.env dist/index.js",
+    "typecheck": "tsc --project tsconfig.json --noEmit",
+    "webhook": "pnpm build && node --env-file=.env dist/webhook.js"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.19.9",
+    "@imessage-sdk/blooio": "workspace:*",
+    "hono": "^4.11.9",
+    "imessage-sdk": "workspace:*"
+  }
+}

@@ -38,6 +38,7 @@ depend on the public `imessage-sdk` interface rather than provider internals.
 | `packages/chat-adapter`         | Private placeholder for `@imessage-sdk/chat-adapter`                  |
 | `packages/eve-channel`          | Private placeholder for `@imessage-sdk/eve-channel`                   |
 | `packages/cli`                  | Private placeholder for `@imessage-sdk/cli`                           |
+| `examples/basic-blooio`         | Opt-in live example using only published Blooio and core APIs         |
 | `test/package-consumer`         | Clean TypeScript consumer used by package smoke tests                 |
 | `.changeset`                    | Changesets configuration, prerelease state, and pending release notes |
 | `.github/workflows`             | CI and automated release workflows                                    |
@@ -92,6 +93,7 @@ Do not replace pnpm with npm, Yarn, or Bun for workspace operations. Keep the sh
 | `pnpm test`             | Run unit tests across the workspace; live tests remain skipped |
 | `pnpm lint`             | Run ESLint and check Prettier formatting                       |
 | `pnpm format`           | Apply Prettier and import sorting                              |
+| `pnpm package:check`    | Validate packed packages and a clean TypeScript consumer       |
 | `pnpm changeset`        | Create release metadata for changed public packages            |
 | `pnpm changeset status` | Inspect pending package version changes                        |
 
@@ -164,7 +166,8 @@ provider and mode. The normalized client keeps a consistent method surface and t
 
 - Capability declarations and implementations must agree.
 - Keep capabilities static for v0.1.
-- Do not expose experimental behavior as supported.
+- A capability indicates runtime availability, not API stability. Webhooks are
+  available but explicitly experimental in v0.1.
 - Provider-specific methods may exist only when intentionally public and documented.
 - Keep experimental functionality disabled until it is deliberately included in the normalized
   API and verified in the relevant provider mode.
@@ -259,7 +262,7 @@ When adding a provider:
 5. Add unit tests for mapping, errors, webhooks, capabilities, and public typing.
 6. Add an opt-in live integration test when real API verification is possible.
 7. Add the provider to `packages/providers/README.md` and its support matrix.
-8. Add the package to CI tarball checks and `test/package-consumer`.
+8. Add the package to `scripts/check-packages.sh` and `test/package-consumer`.
 9. Document install, configuration, verified operations, and known limitations.
 10. Add a Changeset for all affected public packages.
 
@@ -328,6 +331,11 @@ Do not manually edit package versions or generated package changelogs during the
 flow. The Version Packages pull request performs those updates. Do not publish from an agent session
 unless the user explicitly requests the external release action. Follow `RELEASING.md` for registry,
 OIDC, npm dist-tag, and GitHub Release procedures.
+
+Build all packages once before packing or publishing. Do not add package-level `prepack` build
+scripts: Changesets may publish independent packages concurrently, and declaration builds can race
+against workspace package output. The repository publish helper derives the npm dist-tag from
+Changesets prerelease state; do not hard-code `latest` or `beta` in package manifests.
 
 ## Task completion guidelines
 

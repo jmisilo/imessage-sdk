@@ -42,7 +42,6 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "prepack": "pnpm build",
     "test": "vitest run",
     "test:integration": "BLOOIO_LIVE_TEST=1 vitest run test/blooio.integration.test.ts",
     "test:watch": "vitest",

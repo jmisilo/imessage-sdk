@@ -28,6 +28,10 @@ await client.messages.send({
 `PHOTON_PHONE_NUMBER`, and `PHOTON_WEBHOOK_SECRET`. Explicit options
 override environment values.
 
+Available normalized message, conversation, reaction, typing, and read
+operations are stable in v0.1. Webhook verification and event normalization
+are experimental.
+
 Run the opt-in live test from the repository root:
 
 ```bash

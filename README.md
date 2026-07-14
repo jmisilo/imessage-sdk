@@ -6,7 +6,7 @@ The repository contains the provider-neutral [`imessage-sdk`](./packages/imessag
 core and independently installable providers. The
 core also exposes a public contract for custom providers.
 
-> `0.1.0-beta.0` is a prerelease. Install it with the `beta` tag while the
+> `0.1.0-beta` is a prerelease line. Install it with the `beta` tag while the
 > public API is being validated in real applications.
 
 ## Install
@@ -23,6 +23,9 @@ const client = createIMessageClient({
   provider: blooio(),
 });
 ```
+
+Available normalized v0.1 operations are stable except webhook verification
+and normalized webhook events, which remain experimental.
 
 See the [package README](./packages/imessage-sdk/README.md) for the public API,
 provider configuration, capability boundary, and live integration tests.
@@ -59,10 +62,20 @@ packages/
 ├── chat-adapter/          Private placeholder for @imessage-sdk/chat-adapter
 ├── eve-channel/           Private placeholder for @imessage-sdk/eve-channel
 └── cli/                   Private placeholder for @imessage-sdk/cli
+examples/
+└── basic-blooio/          Opt-in live Blooio API and webhook example
 ```
 
 The core and provider packages are independently publishable. The repository
 root and future package placeholders are private.
+
+## Examples
+
+[`examples/basic-blooio`](./examples/basic-blooio) exercises the public core
+and Blooio packages against a real account: conversation discovery, text,
+attachments, replies, status polling, reactions, typing, read state, and
+signed webhooks. It is guarded by `BLOOIO_RUN_LIVE=1` because running it sends
+real messages and mutates provider state.
 
 ## Releases
 
@@ -78,6 +91,10 @@ Packages** pull request containing generated package versions and changelogs.
 Merging that pull request verifies, builds, and publishes changed packages,
 then creates package-specific Git tags and GitHub Releases, such as
 `imessage-sdk@0.1.0` and `@imessage-sdk/blooio@0.1.0`.
+
+Before publishing, the same release command used by automation also packs each
+public package, runs Publint and Are the Types Wrong, installs all tarballs in
+a clean strict-TypeScript consumer, and checks every public import.
 
 The repository is currently in Changesets `beta` prerelease mode. Release PRs
 therefore produce versions such as `0.1.0-beta.1` and publish them under the

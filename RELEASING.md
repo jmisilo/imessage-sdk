@@ -23,63 +23,27 @@ corepack enable
 pnpm install --frozen-lockfile
 ```
 
-Authenticate the npm CLI for the initial provider bootstrap and dist-tag
-maintenance:
+Local npm authentication is needed only when claiming a brand-new package name
+before its trusted publisher can be configured:
 
 ```bash
 npm login
 npm whoami
 ```
 
-Normal automated releases use GitHub OIDC and do not require a local
-`NPM_TOKEN` or a repository npm token.
+Normal releases run in GitHub Actions through OIDC and need neither a local
+`NPM_TOKEN` nor a repository npm token.
 
 ## One-time npm setup
 
 1. Create or confirm ownership of the `imessage-sdk` npm organization.
 2. Keep prereleases on the `beta` dist-tag.
-3. Bootstrap new provider package names manually before relying on OIDC.
+3. Bootstrap a new package name manually before configuring OIDC for it.
 4. Configure trusted publishing separately for every public package.
 
-The existing core currently has an accidental `latest` tag pointing to a beta.
-Remove it after authenticating:
-
-```bash
-npm dist-tag ls imessage-sdk
-npm dist-tag rm imessage-sdk latest
-npm dist-tag ls imessage-sdk
-```
-
-After the provider split reaches `main`, publish each initial provider beta:
-
-```bash
-pnpm --filter @imessage-sdk/blooio publish --tag beta --access public
-pnpm --filter @imessage-sdk/photon publish --tag beta --access public
-```
-
-Verify their tags and remove `latest` if npm created it:
-
-```bash
-npm dist-tag ls @imessage-sdk/blooio
-npm dist-tag ls @imessage-sdk/photon
-npm dist-tag rm @imessage-sdk/blooio latest
-npm dist-tag rm @imessage-sdk/photon latest
-```
-
-Only run a removal command when the corresponding `latest` tag exists.
-
-Because these bootstrap publications are manual, backfill their Git tags and
-GitHub prereleases from the exact commit used to publish:
-
-```bash
-git tag '@imessage-sdk/blooio@0.1.0-beta.0'
-git tag '@imessage-sdk/photon@0.1.0-beta.0'
-git push origin '@imessage-sdk/blooio@0.1.0-beta.0'
-git push origin '@imessage-sdk/photon@0.1.0-beta.0'
-
-gh release create '@imessage-sdk/blooio@0.1.0-beta.0' --prerelease --generate-notes
-gh release create '@imessage-sdk/photon@0.1.0-beta.0' --prerelease --generate-notes
-```
+The initial prereleases currently own `latest` as a consequence of package
+bootstrap. The first stable release will replace it with `0.1.0`; no dist-tag
+removal is required.
 
 ## One-time GitHub setup
 
@@ -158,25 +122,37 @@ the npm CLI supports OIDC trusted publishing.
 After the first automated release succeeds, npm recommends requiring 2FA and
 disallowing traditional tokens in each package’s publishing-access settings.
 
-## Preparing the current provider-split release
+## Bootstrapping a new public package
 
-1. Authenticate npm and remove the accidental core `latest` tag.
-2. Configure `CHANGESETS_TOKEN` and the `npm-production` environment.
-3. Commit the provider split, release workflow, and changeset on a feature
-   branch.
-4. Open a pull request and wait for all CI checks.
-5. Merge the feature pull request into `main`.
-6. Wait for automation to open the Version Packages pull request.
-7. From the new `main`, manually publish both provider packages at
-   `0.1.0-beta.0` and backfill their GitHub prereleases.
-8. Configure trusted publishing for all three npm packages.
-9. Review the Version Packages pull request. It should prepare
-   `0.1.0-beta.1` for core, Blooio, and Photon.
-10. Merge the Version Packages pull request.
-11. Confirm the workflow publishes all packages and creates package-specific
-    GitHub Releases.
-12. Verify npm tags, provenance, package versions, and installation from a
-    separate project.
+npm cannot configure a trusted publisher for a package that does not exist.
+For the first version of a future provider or adapter:
+
+1. Merge its package and changeset through the normal reviewed PR flow.
+2. Build and pack it from the exact `main` commit that will be tagged.
+3. Inspect and publish the tarball locally under `beta`.
+4. Configure that package's npm trusted publisher.
+5. Backfill the matching Git tag and GitHub prerelease if automation did not
+   create them.
+
+For example:
+
+```bash
+pnpm install --frozen-lockfile
+pnpm lint
+pnpm build
+pnpm typecheck
+pnpm test
+pnpm package:check
+
+PACKAGE_DIR=$(mktemp -d)
+pnpm --filter @imessage-sdk/<provider> pack --pack-destination "$PACKAGE_DIR"
+npm publish "$PACKAGE_DIR/<tarball>.tgz" --tag beta --access public --provenance=false
+```
+
+Direct package publishing commands can incorrectly request provenance outside
+GitHub Actions. Publishing the already-built tarball avoids package-manager
+configuration leakage during this one-time bootstrap. All subsequent releases
+use OIDC automation.
 
 ## Regular release flow
 
@@ -244,6 +220,12 @@ no pending changesets to turn into another release pull request. The workflow
 runs `pnpm release`, which verifies the repository and asks Changesets to
 publish package versions that are not yet present on npm.
 
+The release command is self-contained: it lints, builds once, type-checks,
+tests, and packs every public package. Each tarball must pass Publint, Are the
+Types Wrong, strict TypeScript consumer compilation, and runtime import checks
+before npm publication is invoked. Package-level `prepack` builds are omitted
+so concurrent independent-package publication cannot race declaration builds.
+
 npm authenticates the GitHub Actions job through trusted publishing with OIDC.
 No repository `NPM_TOKEN` is used. Each changed package is published under the
 dist-tag appropriate to the release mode:
@@ -251,6 +233,11 @@ dist-tag appropriate to the release mode:
 - prerelease mode `beta` publishes versions such as `0.1.0-beta.1` under
   `beta`;
 - stable releases publish under `latest`.
+
+`scripts/publish-packages.mjs` reads `.changeset/pre.json` and explicitly
+passes `--tag beta` while prerelease mode is active. It omits the tag in stable
+mode, allowing npm's normal `latest` behavior. This keeps later beta cycles
+from moving `latest` after a stable version exists.
 
 Unchanged public packages are not republished.
 
@@ -291,6 +278,7 @@ pnpm lint
 pnpm build
 pnpm typecheck
 pnpm test
+pnpm package:check
 pnpm changeset status
 ```
 
@@ -306,13 +294,36 @@ Commit the changed `.changeset/pre.json` in a normal pull request. Review the
 resulting stable versions in the Version Packages pull request before merging
 it. Stable publication moves packages to npm’s `latest` tag.
 
+## After the first stable release
+
+Betas are optional. Ordinary fixes and backward-compatible features use the
+regular Changesets flow and publish stable patch or minor versions directly to
+`latest`. A beta is not required before every stable release.
+
+Start another beta cycle only when a change benefits from prerelease testing:
+
+```bash
+pnpm changeset pre enter beta
+```
+
+Commit the prerelease-state change through a reviewed pull request. While the
+mode is active, generated versions use `-beta.N` and publish only to `beta`;
+`latest` remains the last stable release. Promote the line back to stable with:
+
+```bash
+pnpm changeset pre exit
+```
+
+After that change and the generated Version Packages pull request are merged,
+the stable publication updates `latest`.
+
 ## Package archive checks
 
 `pnpm pack` creates a `.tgz` tarball: the compressed archive that npm uploads
 and consumers install. It contains the built JavaScript, declarations,
 metadata, README, and license—not the entire repository.
 
-CI checks each real tarball with:
+CI and the publish command check each real tarball with:
 
 - **Publint**, which validates package metadata, exports, file inclusion, and
   JavaScript/type entry-point consistency.

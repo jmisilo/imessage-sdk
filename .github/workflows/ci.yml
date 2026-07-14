@@ -72,24 +72,5 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Pack and install as a consumer
-        shell: bash
-        run: |
-          PACKAGE_DIR=$(mktemp -d)
-          pnpm --filter imessage-sdk pack --pack-destination "${PACKAGE_DIR}"
-          pnpm --filter @imessage-sdk/blooio pack --pack-destination "${PACKAGE_DIR}"
-          pnpm --filter @imessage-sdk/photon pack --pack-destination "${PACKAGE_DIR}"
-          for PACKAGE_PATH in "${PACKAGE_DIR}"/*.tgz; do
-            pnpm exec publint "${PACKAGE_PATH}" --strict
-            pnpm exec attw "${PACKAGE_PATH}" --profile esm-only
-          done
-          CONSUMER=$(mktemp -d)
-          cp -R test/package-consumer/. "${CONSUMER}"
-          npm install --prefix "${CONSUMER}" "${PACKAGE_DIR}"/*.tgz >/dev/null
-          pnpm exec tsc --project "${CONSUMER}/tsconfig.json"
-          cd "${CONSUMER}"
-          node --input-type=module -e '
-            await import("imessage-sdk");
-            await import("@imessage-sdk/blooio");
-            await import("@imessage-sdk/photon");
-          '
+      - run: pnpm build
+      - run: pnpm package:check

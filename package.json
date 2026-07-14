@@ -24,7 +24,8 @@
     "format:check": "prettier --check .",
     "lint": "pnpm lint:eslint && pnpm format:check",
     "lint:eslint": "eslint .",
-    "release": "pnpm lint && pnpm build && pnpm typecheck && pnpm test && changeset publish",
+    "package:check": "bash scripts/check-packages.sh",
+    "release": "pnpm lint && pnpm build && pnpm typecheck && pnpm test && pnpm package:check && node scripts/publish-packages.mjs",
     "test": "pnpm --recursive --if-present test",
     "typecheck": "pnpm --recursive --if-present typecheck",
     "version-packages": "changeset version"
