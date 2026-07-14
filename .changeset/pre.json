@@ -10,5 +10,7 @@
     "@imessage-sdk/blooio": "0.1.1",
     "@imessage-sdk/photon": "0.1.0"
   },
-  "changesets": []
+  "changesets": [
+    "bright-chats-wave"
+  ]
 }
