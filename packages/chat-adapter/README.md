@@ -128,6 +128,11 @@ await imessage.startTyping(threadId);
 await imessage.markRead(threadId);
 ```
 
+The adapter tracks conversations started through `thread.startTyping()`. Posting a message stops
+typing in a `finally` block, including when sending fails, and disconnecting clears any remaining
+indicators before closing the provider. This prevents persistent Blooio and Photon indicators from
+remaining active after a response.
+
 Operations are checked against the selected provider's runtime capabilities. Chat SDK
 `NotImplementedError` is thrown for unavailable normalized operations.
 

@@ -88,6 +88,7 @@ describe('IMessageAdapter', () => {
     await adapter.removeReaction(threadId, 'message-1', 'heart');
     await adapter.startTyping(threadId);
     await adapter.markRead(threadId);
+    await adapter.disconnect();
 
     expect(fake.spies.addReaction).toHaveBeenCalledWith({
       conversationId: 'conversation-1',
@@ -100,7 +101,21 @@ describe('IMessageAdapter', () => {
       reaction: 'love',
     });
     expect(fake.spies.startTyping).toHaveBeenCalledWith('conversation-1');
+    expect(fake.spies.stopTyping).toHaveBeenCalledWith('conversation-1');
     expect(fake.spies.markRead).toHaveBeenCalledWith('conversation-1');
+    expect(fake.spies.close).toHaveBeenCalledOnce();
+  });
+
+  it('stops an active typing indicator after posting a message', async () => {
+    const fake = createFakeProvider();
+    const adapter = createIMessageAdapter({ provider: fake.provider });
+    const threadId = await adapter.openDM('+15551111111');
+
+    await adapter.startTyping(threadId);
+    await adapter.postMessage(threadId, 'Hello');
+
+    expect(fake.spies.stopTyping).toHaveBeenCalledOnce();
+    expect(fake.spies.stopTyping).toHaveBeenCalledWith('conversation-1');
   });
 
   it('verifies and dispatches inbound webhook messages', async () => {

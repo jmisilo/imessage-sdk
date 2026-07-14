@@ -83,6 +83,7 @@ export function createFakeProvider() {
   const removeReaction = vi.fn(async () => undefined);
   const startTyping = vi.fn(async () => undefined);
   const stopTyping = vi.fn(async () => undefined);
+  const close = vi.fn(async () => undefined);
 
   const provider = defineProvider({
     name: 'test-provider',
@@ -91,6 +92,7 @@ export function createFakeProvider() {
     conversations: { open, get: getConversation, markRead },
     reactions: { add: addReaction, remove: removeReaction },
     typing: { start: startTyping, stop: stopTyping },
+    close,
     webhooks: {
       verify: async (request: Request) => request.headers.get('x-test-signature') === 'valid',
       parse: async () => events,
@@ -114,6 +116,7 @@ export function createFakeProvider() {
       removeReaction,
       startTyping,
       stopTyping,
+      close,
     },
   };
 }

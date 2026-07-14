@@ -65,6 +65,7 @@ export class IMessageAdapter<
     string,
     ChatMessage<IMessageAdapterMessage<TProvider, TConnectionId>>[]
   >();
+  private readonly activeTypingIndicators = new Map<string, string>();
 
   constructor(options: IMessageAdapterOptions<TProvider, TConnectionId>) {
     this.client = createIMessageClient({
@@ -91,6 +92,11 @@ export class IMessageAdapter<
   }
 
   async disconnect(): Promise<void> {
+    await Promise.all(
+      [...this.activeTypingIndicators.keys()].map(
+        async (threadId) => await this.stopTyping(threadId),
+      ),
+    );
     await this.client.close();
   }
 
@@ -123,27 +129,31 @@ export class IMessageAdapter<
     postable: AdapterPostableMessage,
   ): Promise<RawMessage<IMessageAdapterMessage<TProvider, TConnectionId>>> {
     const thread = this.decodeOwnedThreadId(threadId);
-    const text = this.formatConverter.renderPostable(postable).trim();
-    const attachments = await attachmentsFromPostable(postable);
-    if (!text && attachments.length === 0) {
-      throw new AdapterValidationError('imessage', 'Message text or an attachment is required');
+    try {
+      const text = this.formatConverter.renderPostable(postable).trim();
+      const attachments = await attachmentsFromPostable(postable);
+      if (!text && attachments.length === 0) {
+        throw new AdapterValidationError('imessage', 'Message text or an attachment is required');
+      }
+
+      const input: SendMessageInput =
+        attachments.length > 0
+          ? {
+              conversationId: thread.conversationId,
+              ...(text ? { text } : {}),
+              attachments: asNonEmpty(attachments),
+            }
+          : { conversationId: thread.conversationId, text };
+
+      const sent = await this.client.messages.send(input);
+      const resultingThreadId = this.threadId(sent.conversationId);
+      await this.rememberSentMessage(sent.id);
+      this.cacheMessage(this.toChatMessage(sent, resultingThreadId, true));
+
+      return { id: sent.id, raw: sent, threadId: resultingThreadId };
+    } finally {
+      await this.stopTyping(threadId);
     }
-
-    const input: SendMessageInput =
-      attachments.length > 0
-        ? {
-            conversationId: thread.conversationId,
-            ...(text ? { text } : {}),
-            attachments: asNonEmpty(attachments),
-          }
-        : { conversationId: thread.conversationId, text };
-
-    const sent = await this.client.messages.send(input);
-    const resultingThreadId = this.threadId(sent.conversationId);
-    await this.rememberSentMessage(sent.id);
-    this.cacheMessage(this.toChatMessage(sent, resultingThreadId, true));
-
-    return { id: sent.id, raw: sent, threadId: resultingThreadId };
   }
 
   async editMessage(
@@ -240,6 +250,7 @@ export class IMessageAdapter<
     }
     const thread = this.decodeOwnedThreadId(threadId);
     await this.client.typing.start(thread.conversationId);
+    this.activeTypingIndicators.set(threadId, thread.conversationId);
   }
 
   async markRead(threadId: string): Promise<void> {
@@ -563,6 +574,26 @@ export class IMessageAdapter<
       threadId,
       messages.filter((message) => message.id !== messageId),
     );
+  }
+
+  private async stopTyping(threadId: string): Promise<void> {
+    const conversationId = this.activeTypingIndicators.get(threadId);
+    if (conversationId === undefined) return;
+
+    this.activeTypingIndicators.delete(threadId);
+
+    if (!this.client.capabilities.interactions.typingStop) return;
+
+    try {
+      await this.client.typing.stop(conversationId);
+    } catch (error) {
+      this.logger.warn('Failed to stop iMessage typing indicator', {
+        threadId,
+        provider: this.client.provider,
+        connectionId: this.client.connectionId,
+        error,
+      });
+    }
   }
 }
 
