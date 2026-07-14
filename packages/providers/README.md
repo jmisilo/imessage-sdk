@@ -21,7 +21,7 @@ Provider adapters are independently installable packages built on the public
 | Add and remove reactions      | ✅                     | ✅                                |
 | Start and stop typing         | ✅                     | ✅                                |
 | Read receipts                 | ✅                     | ✅                                |
-| Signed webhooks               | ✅                     | ✅                                |
+| Signed webhooks               | Experimental           | Experimental                      |
 | Normalized event stream       | —                      | —                                 |
 | Provider-level event stream   | —                      | Experimental                      |
 | Sender or line discovery      | Linked numbers         | Connected line                    |
@@ -33,6 +33,10 @@ degrading.
 Photon group conversations and streaming exist behind provider-specific APIs,
 but their normalized capabilities remain disabled until their behavior and
 integration tests are stable enough for the v0.1 contract.
+
+All available normalized v0.1 operations are stable except webhook handling.
+Webhook verification and event normalization remain experimental and may
+change in a backward-incompatible way during the 0.1 release line.
 
 ## Installation
 
@@ -56,3 +60,6 @@ See each provider package for configuration and live integration-test details:
 
 - [`@imessage-sdk/blooio`](./blooio)
 - [`@imessage-sdk/photon`](./photon)
+
+For an executable end-to-end Blooio walkthrough, see
+[`examples/basic-blooio`](../../examples/basic-blooio).

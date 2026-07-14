@@ -123,6 +123,7 @@ export interface PhotonProvider extends IMessageProvider<'photon', typeof PHOTON
   readonly conversations: PhotonConversations;
   readonly reactions: ProviderReactions;
   readonly typing: Required<ProviderTyping>;
+  /** @experimental Webhook normalization may change before a future stable release. */
   readonly webhooks: ProviderWebhooks;
   readonly events: ProviderEvents;
   readonly connection: PhotonConnection;

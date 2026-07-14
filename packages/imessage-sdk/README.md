@@ -327,6 +327,10 @@ construction, while stream providers connect lazily when subscribed.
 `client.close()` is always available and idempotent. It is a no-op when the
 provider has no cleanup and releases resources for stream or local transports.
 
+All available normalized v0.1 operations are stable except webhook handling.
+`client.webhooks`, `ProviderWebhooks`, and webhook event normalization are
+marked experimental and may change incompatibly during the 0.1 release line.
+
 ## Blooio operations
 
 The v0.1 Blooio adapter supports text and public URL attachments, inline
@@ -347,9 +351,9 @@ await client.typing.stop(sent.conversationId);
 await client.conversations.markRead(sent.conversationId);
 ```
 
-Webhook handling verifies `X-Blooio-Signature` before parsing and returns an
-array because one provider delivery can represent zero, one, or multiple
-normalized events:
+Experimental webhook handling verifies `X-Blooio-Signature` before parsing and
+returns an array because one provider delivery can represent zero, one, or
+multiple normalized events:
 
 ```ts
 const events = await client.webhooks.handle(request);

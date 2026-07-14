@@ -42,7 +42,6 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "prepack": "pnpm build",
     "test": "vitest run",
     "test:integration": "PHOTON_LIVE_TEST=1 vitest run test/photon.integration.test.ts",
     "test:integration:stream": "PHOTON_LIVE_STREAM_TEST=1 vitest run test/photon.integration.test.ts",
