@@ -6,13 +6,10 @@ The repository contains the provider-neutral [`imessage-sdk`](./packages/imessag
 core and independently installable providers. The
 core also exposes a public contract for custom providers.
 
-> `0.1.0-beta` is a prerelease line. Install it with the `beta` tag while the
-> public API is being validated in real applications.
-
 ## Install
 
 ```bash
-pnpm add imessage-sdk@beta @imessage-sdk/blooio@beta
+pnpm add imessage-sdk @imessage-sdk/blooio
 ```
 
 ```ts
@@ -96,10 +93,8 @@ Before publishing, the same release command used by automation also packs each
 public package, runs Publint and Are the Types Wrong, installs all tarballs in
 a clean strict-TypeScript consumer, and checks every public import.
 
-The repository is currently in Changesets `beta` prerelease mode. Release PRs
-therefore produce versions such as `0.1.0-beta.1` and publish them under the
-`beta` npm dist-tag. When the public API is ready, run `pnpm changeset pre exit`
-on a branch and merge that change through the same reviewed flow.
+Releases publish under npm's `latest` dist-tag. See
+[RELEASING.md](./RELEASING.md) for the complete maintainer workflow.
 
 ### Release automation setup
 
