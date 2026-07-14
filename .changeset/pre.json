@@ -11,6 +11,7 @@
     "@imessage-sdk/photon": "0.1.0"
   },
   "changesets": [
-    "bright-chats-wave"
+    "bright-chats-wave",
+    "calm-phones-type"
   ]
 }
