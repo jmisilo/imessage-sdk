@@ -1,5 +1,11 @@
 # imessage-sdk
 
+## 0.1.1
+
+### Patch Changes
+
+- [#7](https://github.com/jmisilo/imessage-sdk/pull/7) [`7e3936a`](https://github.com/jmisilo/imessage-sdk/commit/7e3936a8558f7b91f7b301ed4476baca453a7641) Thanks [@jmisilo](https://github.com/jmisilo)! - Update installation and stability documentation for the stable v0.1 release.
+
 ## 0.1.0
 
 ### Patch Changes
