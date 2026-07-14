@@ -1,6 +1,6 @@
 # @imessage-sdk/blooio
 
-Blooio v2 provider for [`imessage-sdk`](https://www.npmjs.com/package/imessage-sdk).
+[Blooio](https://app.blooio.com/signup?ref=BLOO-2NS4AJM8) v2 provider for [`imessage-sdk`](https://www.npmjs.com/package/imessage-sdk).
 
 ## Install
 

@@ -3,8 +3,9 @@
 A provider-neutral TypeScript conversation layer for iMessage infrastructure.
 
 The repository contains the provider-neutral [`imessage-sdk`](./packages/imessage-sdk)
-core and independently installable providers. The
-core also exposes a public contract for custom providers.
+core, independently installable providers, and a beta
+[`@imessage-sdk/chat-adapter`](./packages/chat-adapter) for
+[Chat SDK](https://chat-sdk.dev). The core also exposes a public contract for custom providers.
 
 ## Install
 
@@ -20,6 +21,8 @@ const client = createIMessageClient({
   provider: blooio(),
 });
 ```
+
+P.S. remember to create your own [Blooio account](https://app.blooio.com/signup?ref=BLOO-2NS4AJM8) and configure the provider with your credentials.
 
 Available normalized v0.1 operations are stable except webhook verification
 and normalized webhook events, which remain experimental.
@@ -56,15 +59,39 @@ packages/
 ├── providers/
 │   ├── blooio/            @imessage-sdk/blooio
 │   └── photon/            @imessage-sdk/photon
-├── chat-adapter/          Private placeholder for @imessage-sdk/chat-adapter
+├── chat-adapter/          @imessage-sdk/chat-adapter (beta)
 ├── eve-channel/           Private placeholder for @imessage-sdk/eve-channel
 └── cli/                   Private placeholder for @imessage-sdk/cli
 examples/
 └── basic-blooio/          Opt-in live Blooio API and webhook example
 ```
 
-The core and provider packages are independently publishable. The repository
-root and future package placeholders are private.
+The core, provider packages, and Chat SDK adapter are independently publishable. The repository
+root and remaining future package placeholders are private.
+
+## Chat SDK
+
+```bash
+pnpm add @imessage-sdk/chat-adapter@beta chat
+```
+
+```ts
+import { Chat } from 'chat';
+
+import { blooio } from '@imessage-sdk/blooio';
+import { createIMessageAdapter } from '@imessage-sdk/chat-adapter';
+
+const imessage = createIMessageAdapter({ provider: blooio() });
+
+const chat = new Chat({
+  userName: 'my-agent',
+  adapters: { imessage },
+  state,
+});
+```
+
+See the [adapter README](./packages/chat-adapter/README.md) for Hono webhook wiring, supported
+features, thread IDs, attachments, and provider-aware typing.
 
 ## Examples
 
