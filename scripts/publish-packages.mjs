@@ -7,7 +7,7 @@ import { URL } from 'node:url';
 const prerelease = await readPrereleaseState();
 const tag = prerelease?.mode === 'pre' ? prerelease.tag : undefined;
 const executable = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
-const args = ['exec', 'changeset', 'publish', ...(tag === undefined ? [] : ['--tag', tag])];
+const args = ['exec', 'changeset', 'publish'];
 
 log(
   tag === undefined

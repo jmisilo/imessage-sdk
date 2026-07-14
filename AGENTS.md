@@ -35,7 +35,7 @@ depend on the public `imessage-sdk` interface rather than provider internals.
 | `packages/imessage-sdk`         | Provider-neutral core package (`imessage-sdk`)                        |
 | `packages/providers/<provider>` | Independently published provider package                              |
 | `packages/providers/README.md`  | Cross-provider feature support matrix                                 |
-| `packages/chat-adapter`         | Private placeholder for `@imessage-sdk/chat-adapter`                  |
+| `packages/chat-adapter`         | Beta Chat SDK integration (`@imessage-sdk/chat-adapter`)              |
 | `packages/eve-channel`          | Private placeholder for `@imessage-sdk/eve-channel`                   |
 | `packages/cli`                  | Private placeholder for `@imessage-sdk/cli`                           |
 | `examples/basic-blooio`         | Opt-in live example using only published Blooio and core APIs         |
@@ -50,8 +50,9 @@ The repository does not use Turborepo. Workspace membership is defined only by
 ## Package relationships
 
 ```text
-@imessage-sdk/<provider> -> imessage-sdk
-future adapters and CLI -> imessage-sdk
+@imessage-sdk/<provider>     -> imessage-sdk
+@imessage-sdk/chat-adapter   -> imessage-sdk
+future adapters and CLI      -> imessage-sdk
 ```
 
 Workspace packages import package names, never source files from another package:
