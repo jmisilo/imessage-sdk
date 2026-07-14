@@ -1,5 +1,11 @@
 # @imessage-sdk/chat-adapter
 
+## 0.1.0-beta.2
+
+### Patch Changes
+
+- [#13](https://github.com/jmisilo/imessage-sdk/pull/13) [`1ab9f81`](https://github.com/jmisilo/imessage-sdk/commit/1ab9f81fa69daa918b2689e9e759c0b606f7d2a0) Thanks [@jmisilo](https://github.com/jmisilo)! - Stop provider typing indicators after outbound message attempts and during adapter shutdown.
+
 ## 0.1.0-beta.1
 
 ### Minor Changes
