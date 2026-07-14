@@ -9,13 +9,10 @@ provider dependencies they use.
 
 The package is ESM-only and ships JavaScript plus TypeScript declarations.
 
-> This is a beta release. Install the prerelease with `pnpm add
-imessage-sdk@beta` while the public API is being validated.
-
 ## Install
 
 ```bash
-pnpm add imessage-sdk@beta @imessage-sdk/blooio@beta
+pnpm add imessage-sdk @imessage-sdk/blooio
 ```
 
 ## Creating a client
@@ -452,12 +449,14 @@ within 60 seconds:
 pnpm --filter @imessage-sdk/photon test:integration:stream
 ```
 
-## v0.1 beta boundary
+## v0.1 scope and stability
 
 The initial model includes text, URL/blob/byte attachments, thread replies,
-direct conversations, statuses, reactions, typing, webhooks, typed
-capabilities, and typed errors. Photon streams and both providers' group
-implementations remain experimental provider-level APIs.
+direct conversations, statuses, reactions, typing, typed capabilities, and
+typed errors. These available normalized operations are stable. Webhook
+verification and normalized webhook events remain experimental. Photon streams
+and both providers' group implementations remain experimental provider-level
+APIs.
 
 It intentionally excludes FaceTime, polls, location sharing, contacts, message
 effects, scheduling, provisioning, and automatic provider fallback.
