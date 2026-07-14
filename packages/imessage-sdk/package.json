@@ -14,7 +14,7 @@
     "url": "git+https://github.com/jmisilo/imessage-sdk.git",
     "directory": "packages/imessage-sdk"
   },
-  "homepage": "https://github.com/jmisilo/imessage-sdk/tree/main/packages/imessage-sdk#readme",
+  "homepage": "https://imessage-sdk.dev",
   "bugs": {
     "url": "https://github.com/jmisilo/imessage-sdk/issues"
   },
