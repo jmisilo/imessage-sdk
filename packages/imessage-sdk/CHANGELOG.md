@@ -1,5 +1,14 @@
 # imessage-sdk
 
+## 0.1.3
+
+### Patch Changes
+
+- [#15](https://github.com/jmisilo/imessage-sdk/pull/15) [`517aa7a`](https://github.com/jmisilo/imessage-sdk/commit/517aa7ae1a0df633d613ad26571aaf14cd1e1e02) Thanks [@jmisilo](https://github.com/jmisilo)! - Add provider-neutral authenticated attachment downloads and implement Photon primary-byte
+  streaming.
+
+- [#15](https://github.com/jmisilo/imessage-sdk/pull/15) [`517aa7a`](https://github.com/jmisilo/imessage-sdk/commit/517aa7ae1a0df633d613ad26571aaf14cd1e1e02) Thanks [@jmisilo](https://github.com/jmisilo)! - Promote signed webhook verification and normalized webhook events from experimental to stable.
+
 ## 0.1.2
 
 ### Patch Changes
