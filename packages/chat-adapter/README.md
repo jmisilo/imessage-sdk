@@ -3,14 +3,12 @@
 Provider-neutral iMessage adapter for [Chat SDK](https://chat-sdk.dev), powered by
 [`imessage-sdk`](https://www.npmjs.com/package/imessage-sdk).
 
-> This package is currently in beta and its adapter API may change before a stable release.
-
 ## Install
 
 Install the adapter, Chat SDK, core SDK, state backend, and one provider:
 
 ```bash
-pnpm add @imessage-sdk/chat-adapter@beta @imessage-sdk/blooio imessage-sdk chat @chat-adapter/state-pg
+pnpm add @imessage-sdk/chat-adapter @imessage-sdk/blooio imessage-sdk chat @chat-adapter/state-pg
 ```
 
 ## Usage
@@ -157,7 +155,7 @@ Set `persistThreadHistory = true` so Chat SDK stores conversation history in its
 The adapter's direct `fetchMessages()` method maintains only a bounded in-process cache because
 `imessage-sdk` does not yet expose provider-neutral message-history pagination.
 
-## v0.1 beta scope
+## v0.1 scope
 
 Supported:
 

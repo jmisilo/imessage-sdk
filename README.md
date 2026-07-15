@@ -3,7 +3,7 @@
 A provider-neutral TypeScript conversation layer for iMessage infrastructure.
 
 The repository contains the provider-neutral [`imessage-sdk`](./packages/imessage-sdk)
-core, independently installable providers, and a beta
+core, independently installable providers, and the
 [`@imessage-sdk/chat-adapter`](./packages/chat-adapter) for
 [Chat SDK](https://chat-sdk.dev). The core also exposes a public contract for custom providers.
 
@@ -59,7 +59,7 @@ packages/
 ├── providers/
 │   ├── blooio/            @imessage-sdk/blooio
 │   └── photon/            @imessage-sdk/photon
-├── chat-adapter/          @imessage-sdk/chat-adapter (beta)
+├── chat-adapter/          @imessage-sdk/chat-adapter
 ├── eve-channel/           Private placeholder for @imessage-sdk/eve-channel
 └── cli/                   Private placeholder for @imessage-sdk/cli
 examples/
@@ -72,7 +72,7 @@ root and remaining future package placeholders are private.
 ## Chat SDK
 
 ```bash
-pnpm add @imessage-sdk/chat-adapter@beta chat
+pnpm add @imessage-sdk/chat-adapter chat
 ```
 
 ```ts

@@ -10,7 +10,7 @@ requests, npm trusted publishing, and package-specific GitHub Releases.
 | `packages/imessage-sdk`     | `imessage-sdk`               | Public              |
 | `packages/providers/blooio` | `@imessage-sdk/blooio`       | Public              |
 | `packages/providers/photon` | `@imessage-sdk/photon`       | Public              |
-| `packages/chat-adapter`     | `@imessage-sdk/chat-adapter` | Private placeholder |
+| `packages/chat-adapter`     | `@imessage-sdk/chat-adapter` | Public              |
 | `packages/eve-channel`      | `@imessage-sdk/eve-channel`  | Private placeholder |
 | `packages/cli`              | `@imessage-sdk/cli`          | Private placeholder |
 
@@ -101,7 +101,7 @@ changelogs.
 ## Trusted publishing on npm
 
 Configure trusted publishing separately in the settings for `imessage-sdk`,
-`@imessage-sdk/blooio`, and `@imessage-sdk/photon`:
+`@imessage-sdk/blooio`, `@imessage-sdk/photon`, and `@imessage-sdk/chat-adapter`:
 
 ```text
 Provider: GitHub Actions
@@ -282,17 +282,20 @@ pnpm package:check
 pnpm changeset status
 ```
 
-## Leaving beta
+## Promoting a bootstrapped beta to stable
 
-When the public API is ready for a stable release:
+If a package was initially published with a prerelease version without entering
+Changesets prerelease mode, add a normal patch Changeset for that package. For
+example, a patch release from `0.1.0-beta.3` resolves to stable `0.1.0`. Review
+that target in the Version Packages pull request before merging it. Stable
+publication moves the package to npm’s `latest` tag.
+
+If `.changeset/pre.json` exists because the repository is in Changesets
+prerelease mode, leave that mode instead:
 
 ```bash
 pnpm changeset pre exit
 ```
-
-Commit the changed `.changeset/pre.json` in a normal pull request. Review the
-resulting stable versions in the Version Packages pull request before merging
-it. Stable publication moves packages to npm’s `latest` tag.
 
 ## After the first stable release
 
