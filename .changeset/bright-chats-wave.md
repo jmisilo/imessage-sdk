@@ -1,5 +1,5 @@
 ---
-'@imessage-sdk/chat-adapter': minor
+'@imessage-sdk/chat-adapter': patch
 ---
 
 Add the initial beta Chat SDK adapter with provider-aware clients, direct messages, attachments,

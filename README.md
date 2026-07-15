@@ -24,8 +24,8 @@ const client = createIMessageClient({
 
 P.S. remember to create your own [Blooio account](https://app.blooio.com/signup?ref=BLOO-2NS4AJM8) and configure the provider with your credentials.
 
-Available normalized v0.1 operations are stable except webhook verification
-and normalized webhook events, which remain experimental.
+Available normalized v0.1 operations, including signed webhook verification and normalized webhook
+events, are stable.
 
 See the [package README](./packages/imessage-sdk/README.md) for the public API,
 provider configuration, capability boundary, and live integration tests.

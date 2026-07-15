@@ -167,8 +167,8 @@ provider and mode. The normalized client keeps a consistent method surface and t
 
 - Capability declarations and implementations must agree.
 - Keep capabilities static for v0.1.
-- A capability indicates runtime availability, not API stability. Webhooks are
-  available but explicitly experimental in v0.1.
+- A capability indicates runtime availability, not API stability. Normalized webhook verification
+  and event parsing are stable in v0.1.
 - Provider-specific methods may exist only when intentionally public and documented.
 - Keep experimental functionality disabled until it is deliberately included in the normalized
   API and verified in the relevant provider mode.

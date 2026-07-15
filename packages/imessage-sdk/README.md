@@ -116,6 +116,18 @@ await client.messages.send({
 });
 ```
 
+Providers may also support authenticated downloads for inbound attachments that do not have a
+public URL:
+
+```ts
+if (client.capabilities.attachments?.download) {
+  const data = await client.attachments.download('provider-attachment-id');
+}
+```
+
+The normalized result is a `Uint8Array`. Photon supports this operation; Blooio inbound
+attachments use their normalized public URL instead.
+
 Replies use the provider-native message ID and optional message-part index:
 
 ```ts
@@ -324,9 +336,8 @@ construction, while stream providers connect lazily when subscribed.
 `client.close()` is always available and idempotent. It is a no-op when the
 provider has no cleanup and releases resources for stream or local transports.
 
-All available normalized v0.1 operations are stable except webhook handling.
-`client.webhooks`, `ProviderWebhooks`, and webhook event normalization are
-marked experimental and may change incompatibly during the 0.1 release line.
+All available normalized v0.1 operations are stable, including `client.webhooks`,
+`ProviderWebhooks`, signed webhook verification, and webhook event normalization.
 
 ## Blooio operations
 
@@ -348,9 +359,8 @@ await client.typing.stop(sent.conversationId);
 await client.conversations.markRead(sent.conversationId);
 ```
 
-Experimental webhook handling verifies `X-Blooio-Signature` before parsing and
-returns an array because one provider delivery can represent zero, one, or
-multiple normalized events:
+Webhook handling verifies `X-Blooio-Signature` before parsing and returns an array because one
+provider delivery can represent zero, one, or multiple normalized events:
 
 ```ts
 const events = await client.webhooks.handle(request);
@@ -453,10 +463,8 @@ pnpm --filter @imessage-sdk/photon test:integration:stream
 
 The initial model includes text, URL/blob/byte attachments, thread replies,
 direct conversations, statuses, reactions, typing, typed capabilities, and
-typed errors. These available normalized operations are stable. Webhook
-verification and normalized webhook events remain experimental. Photon streams
-and both providers' group implementations remain experimental provider-level
-APIs.
+typed errors. These available normalized operations, including webhooks, are stable. Photon
+streams and both providers' group implementations remain experimental provider-level APIs.
 
 It intentionally excludes FaceTime, polls, location sharing, contacts, message
 effects, scheduling, provisioning, and automatic provider fallback.

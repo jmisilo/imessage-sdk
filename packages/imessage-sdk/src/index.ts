@@ -48,6 +48,7 @@ export type {
   AnyIMessageProvider,
   IMessageProvider,
   ProviderConversations,
+  ProviderAttachments,
   ProviderEvents,
   ProviderMessages,
   ProviderReactions,

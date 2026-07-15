@@ -22,6 +22,11 @@ void blooioProvider;
 void photonProvider;
 void blooioClient.providers.blooio.numbers.list;
 void photonClient.providers.photon.connection.getLine;
+void photonClient.attachments.download;
+const photonDownloadsAttachments: true = photonClient.capabilities.attachments.download;
+const blooioDownloadsAttachments: false = blooioClient.capabilities.attachments.download;
+void photonDownloadsAttachments;
+void blooioDownloadsAttachments;
 
 const imessage = createIMessageAdapter({
   connectionId: 'chat-consumer',

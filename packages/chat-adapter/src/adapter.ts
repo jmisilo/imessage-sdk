@@ -1,6 +1,7 @@
 import type {
   Adapter,
   AdapterPostableMessage,
+  Attachment,
   ChatInstance,
   EmojiValue,
   FetchOptions,
@@ -31,6 +32,7 @@ import {
   WebhookVerificationError,
 } from 'imessage-sdk';
 
+import type { AttachmentDownloadOptions } from './messages.js';
 import type {
   IMessageAdapterClient,
   IMessageAdapterMessage,
@@ -39,7 +41,12 @@ import type {
 } from './types.js';
 import { attachmentsFromPostable } from './attachments.js';
 import { IMessageFormatConverter } from './format.js';
-import { addressFromUserId, attachmentToChat, authorFromAddress } from './messages.js';
+import {
+  addressFromUserId,
+  attachmentToChat,
+  authorFromAddress,
+  rehydrateIMessageAttachment,
+} from './messages.js';
 import { toChatEmoji, toIMessageReaction } from './reactions.js';
 import { decodeIMessageThreadId, encodeIMessageThreadId } from './thread-id.js';
 
@@ -371,6 +378,10 @@ export class IMessageAdapter<
     return this.formatConverter.fromAst(content);
   }
 
+  rehydrateAttachment(attachment: Attachment): Attachment {
+    return rehydrateIMessageAttachment(attachment, this.attachmentDownloadOptions());
+  }
+
   private readonly formatConverter = new IMessageFormatConverter();
 
   private async processEvent(
@@ -451,7 +462,9 @@ export class IMessageAdapter<
         dateSent: raw.sentAt ?? raw.createdAt,
         edited: false,
       },
-      attachments: raw.attachments.map(attachmentToChat),
+      attachments: raw.attachments.map((attachment) =>
+        attachmentToChat(attachment, this.attachmentDownloadOptions()),
+      ),
     });
   }
 
@@ -574,6 +587,15 @@ export class IMessageAdapter<
       threadId,
       messages.filter((message) => message.id !== messageId),
     );
+  }
+
+  private attachmentDownloadOptions(): AttachmentDownloadOptions | undefined {
+    if (this.client.capabilities.attachments?.download !== true) return undefined;
+    return {
+      provider: this.client.provider,
+      connectionId: this.client.connectionId,
+      download: async (attachmentId) => await this.client.attachments.download(attachmentId),
+    };
   }
 
   private async stopTyping(threadId: string): Promise<void> {

@@ -10,6 +10,7 @@ Provider adapters are independently installable packages built on the public
 | Send public URL attachments   | ✅                     | ✅                                |
 | Send `Blob` attachments       | —                      | ✅                                |
 | Send `Uint8Array` attachments | —                      | ✅                                |
+| Access inbound attachments    | Public URL             | Authenticated byte download       |
 | Reply to a message            | ✅                     | ✅                                |
 | Get a message                 | ✅                     | ✅                                |
 | Edit a message                | —                      | —                                 |
@@ -21,7 +22,7 @@ Provider adapters are independently installable packages built on the public
 | Add and remove reactions      | ✅                     | ✅                                |
 | Start and stop typing         | ✅                     | ✅                                |
 | Read receipts                 | ✅                     | ✅                                |
-| Signed webhooks               | Experimental           | Experimental                      |
+| Signed webhooks               | ✅                     | ✅                                |
 | Normalized event stream       | —                      | —                                 |
 | Provider-level event stream   | —                      | Experimental                      |
 | Sender or line discovery      | Linked numbers         | Connected line                    |
@@ -34,9 +35,8 @@ Photon group conversations and streaming exist behind provider-specific APIs,
 but their normalized capabilities remain disabled until their behavior and
 integration tests are stable enough for the v0.1 contract.
 
-All available normalized v0.1 operations are stable except webhook handling.
-Webhook verification and event normalization remain experimental and may
-change in a backward-incompatible way during the 0.1 release line.
+All available normalized v0.1 operations, including webhook verification and event normalization,
+are stable.
 
 ## Installation
 

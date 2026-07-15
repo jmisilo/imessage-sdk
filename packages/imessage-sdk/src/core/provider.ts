@@ -21,6 +21,11 @@ export interface ProviderMessages {
   delete?(message: MessageLocator): Promise<void>;
 }
 
+export interface ProviderAttachments {
+  /** Downloads one provider-native attachment into memory. */
+  download(attachmentId: string): Promise<Uint8Array>;
+}
+
 export interface ProviderConversations {
   open(input: OpenConversationInput): Promise<ProviderConversation>;
   get?(conversationId: string): Promise<ProviderConversation | null>;
@@ -37,11 +42,7 @@ export interface ProviderTyping {
   stop?(conversationId: string): Promise<void>;
 }
 
-/**
- * Provider webhook verification and normalization contract.
- *
- * @experimental Webhook normalization may change before a future stable release.
- */
+/** Provider webhook verification and normalization contract. */
 export interface ProviderWebhooks {
   verify(request: Request): Promise<boolean>;
   parse(request: Request): Promise<readonly ProviderEvent[]>;
@@ -63,11 +64,11 @@ export interface IMessageProvider<
 > {
   readonly name: TName;
   readonly capabilities: TCapabilities;
+  readonly attachments?: ProviderAttachments;
   readonly messages: ProviderMessages;
   readonly conversations: ProviderConversations;
   readonly reactions?: ProviderReactions;
   readonly typing?: ProviderTyping;
-  /** @experimental Webhook normalization may change before a future stable release. */
   readonly webhooks?: ProviderWebhooks;
   readonly events?: ProviderEvents;
   close?(): Promise<void>;

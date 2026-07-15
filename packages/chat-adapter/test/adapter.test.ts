@@ -149,6 +149,130 @@ describe('IMessageAdapter', () => {
     });
   });
 
+  it('exposes and rehydrates authenticated inbound attachment downloads', async () => {
+    const fake = createFakeProvider();
+    fake.setEvents([
+      messageReceivedEvent(
+        fakeMessage({
+          attachments: [
+            {
+              kind: 'image',
+              id: 'attachment-photo',
+              filename: 'photo.jpg',
+              contentType: 'image/jpeg',
+              size: 3,
+              raw: { fixture: true },
+            },
+          ],
+        }),
+      ),
+    ]);
+    const processMessage = vi.fn(
+      async (...arguments_: Parameters<ChatInstance['processMessage']>) => {
+        void arguments_;
+      },
+    );
+    const adapter = createIMessageAdapter({ provider: fake.provider });
+    await adapter.initialize(createMockChatInstance({ overrides: { processMessage } }));
+
+    await adapter.handleWebhook(
+      new Request('https://example.com/webhooks/imessage', {
+        method: 'POST',
+        headers: { 'x-test-signature': 'valid' },
+        body: '{}',
+      }),
+    );
+
+    const processedMessage = processMessage.mock.calls[0]?.[2];
+    const message =
+      typeof processedMessage === 'function' ? await processedMessage() : processedMessage;
+    const attachment = message?.attachments[0];
+    expect(attachment).toMatchObject({
+      type: 'image',
+      name: 'photo.jpg',
+      mimeType: 'image/jpeg',
+      size: 3,
+      fetchMetadata: {
+        provider: 'test-provider',
+        connectionId: 'default',
+        attachmentId: 'attachment-photo',
+      },
+    });
+    await expect(attachment?.fetchData?.()).resolves.toEqual(Buffer.from([1, 2, 3]));
+    if (attachment?.fetchMetadata === undefined) {
+      throw new TypeError('Expected attachment fetch metadata');
+    }
+
+    const rehydrated = adapter.rehydrateAttachment({
+      type: 'image',
+      fetchMetadata: attachment.fetchMetadata,
+    });
+    await expect(rehydrated.fetchData?.()).resolves.toEqual(Buffer.from([1, 2, 3]));
+    expect(fake.spies.downloadAttachment).toHaveBeenCalledTimes(2);
+  });
+
+  it('preserves public inbound attachment URLs without authenticated downloads', async () => {
+    const fake = createFakeProvider();
+    fake.setEvents([
+      messageReceivedEvent(
+        fakeMessage({
+          attachments: [
+            {
+              kind: 'image',
+              url: 'https://cdn.test/inbound.jpg',
+              filename: 'inbound.jpg',
+              contentType: 'image/jpeg',
+              raw: { fixture: true },
+            },
+          ],
+        }),
+      ),
+    ]);
+    const processMessage = vi.fn(
+      async (...arguments_: Parameters<ChatInstance['processMessage']>) => {
+        void arguments_;
+      },
+    );
+    const adapter = createIMessageAdapter({ provider: fake.provider });
+    await adapter.initialize(createMockChatInstance({ overrides: { processMessage } }));
+
+    await adapter.handleWebhook(
+      new Request('https://example.com/webhooks/imessage', {
+        method: 'POST',
+        headers: { 'x-test-signature': 'valid' },
+        body: '{}',
+      }),
+    );
+
+    const processedMessage = processMessage.mock.calls[0]?.[2];
+    const message =
+      typeof processedMessage === 'function' ? await processedMessage() : processedMessage;
+    expect(message?.attachments[0]).toMatchObject({
+      type: 'image',
+      url: 'https://cdn.test/inbound.jpg',
+      name: 'inbound.jpg',
+      mimeType: 'image/jpeg',
+    });
+    expect(message?.attachments[0]?.fetchData).toBeUndefined();
+    expect(fake.spies.downloadAttachment).not.toHaveBeenCalled();
+  });
+
+  it('does not rehydrate attachment metadata owned by another provider connection', () => {
+    const fake = createFakeProvider();
+    const adapter = createIMessageAdapter({ provider: fake.provider });
+
+    const attachment = adapter.rehydrateAttachment({
+      type: 'file',
+      fetchMetadata: {
+        provider: 'photon',
+        connectionId: 'another-line',
+        attachmentId: 'attachment-1',
+      },
+    });
+
+    expect(attachment.fetchData).toBeUndefined();
+  });
+
   it('rejects invalid webhook signatures', async () => {
     const fake = createFakeProvider();
     const adapter = createIMessageAdapter({ provider: fake.provider });

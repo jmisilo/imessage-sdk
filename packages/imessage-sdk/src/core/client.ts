@@ -44,6 +44,10 @@ export interface IMessageClient<
   readonly capabilities: TProvider['capabilities'];
   readonly providers: ClientProviders<TProvider>;
 
+  readonly attachments: {
+    download(attachmentId: string): Promise<Uint8Array>;
+  };
+
   readonly messages: {
     send(input: SendMessageInput): Promise<SentMessage<ProviderNameOf<TProvider>, TConnectionId>>;
     get(message: MessageLocator): Promise<Message<ProviderNameOf<TProvider>, TConnectionId> | null>;
@@ -74,7 +78,6 @@ export interface IMessageClient<
     stop(conversationId: string): Promise<void>;
   };
 
-  /** @experimental Webhook normalization may change before a future stable release. */
   readonly webhooks: {
     handle(
       request: Request,
@@ -102,6 +105,11 @@ function validateProvider(provider: AnyIMessageProvider): void {
   const capabilities = provider.capabilities;
 
   const requirements: readonly [boolean, unknown, string][] = [
+    [
+      capabilities.attachments?.download === true,
+      provider.attachments?.download,
+      'attachments.download',
+    ],
     [capabilities.messages.get, provider.messages.get, 'messages.get'],
     [capabilities.messages.edit, provider.messages.edit, 'messages.edit'],
     [capabilities.messages.delete, provider.messages.delete, 'messages.delete'],
@@ -260,6 +268,25 @@ export function createIMessageClient<
     connectionId,
     capabilities: provider.capabilities,
     providers,
+    attachments: {
+      async download(attachmentId) {
+        assertOpen();
+
+        if (attachmentId.trim().length === 0) {
+          throw new ValidationError('attachmentId must not be empty.', {
+            ...errorContext,
+            code: 'invalid_attachment_id',
+          });
+        }
+
+        if (provider.capabilities.attachments?.download !== true) {
+          unsupported('attachments.download');
+        }
+
+        const attachments = requireImplementation(provider.attachments, 'attachments.download');
+        return await attachments.download(attachmentId);
+      },
+    },
     messages: {
       async send(input) {
         assertOpen();

@@ -10,6 +10,9 @@ import type {
 import { defineProvider } from 'imessage-sdk';
 
 const FULL_CAPABILITIES = {
+  attachments: {
+    download: true,
+  },
   messages: {
     text: true,
     attachments: true,
@@ -59,6 +62,7 @@ export function createFakeProvider() {
       direction: 'outbound',
     };
   });
+  const downloadAttachment = vi.fn(async () => new Uint8Array([1, 2, 3]));
 
   const get = vi.fn(async ({ messageId }): Promise<ProviderMessage | null> =>
     messageId === 'missing' ? null : fakeMessage({ providerMessageId: messageId }),
@@ -88,6 +92,7 @@ export function createFakeProvider() {
   const provider = defineProvider({
     name: 'test-provider',
     capabilities: FULL_CAPABILITIES,
+    attachments: { download: downloadAttachment },
     messages: { send, get, edit, delete: deleteMessage },
     conversations: { open, get: getConversation, markRead },
     reactions: { add: addReaction, remove: removeReaction },
@@ -106,6 +111,7 @@ export function createFakeProvider() {
     },
     spies: {
       send,
+      downloadAttachment,
       get,
       edit,
       deleteMessage,
