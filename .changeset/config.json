@@ -8,7 +8,7 @@
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
   "bumpVersionsWithWorkspaceProtocolOnly": true,
-  "ignore": ["@imessage-sdk/chat-adapter"],
+  "ignore": [],
   "privatePackages": {
     "version": false,
     "tag": false
