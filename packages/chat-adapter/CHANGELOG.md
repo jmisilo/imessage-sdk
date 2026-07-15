@@ -1,5 +1,12 @@
 # @imessage-sdk/chat-adapter
 
+## 0.1.0
+
+### Patch Changes
+
+- [#24](https://github.com/jmisilo/imessage-sdk/pull/24) [`f754675`](https://github.com/jmisilo/imessage-sdk/commit/f75467514c49645910ed6938b3db4753c3c4c2b4) Thanks [@jmisilo](https://github.com/jmisilo)! - Promote the provider-neutral Chat SDK adapter to its first stable release, with direct messages,
+  attachments, signed webhooks, reactions, typing indicators, read state, and provider-aware typing.
+
 ## 0.1.0-beta.3
 
 ### Patch Changes

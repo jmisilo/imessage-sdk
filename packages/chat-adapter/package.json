@@ -1,6 +1,6 @@
 {
   "name": "@imessage-sdk/chat-adapter",
-  "version": "0.1.0-beta.3",
+  "version": "0.1.0",
   "description": "Provider-neutral iMessage adapter for Chat SDK",
   "author": "jmisilo",
   "keywords": [
