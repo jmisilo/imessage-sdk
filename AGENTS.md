@@ -35,7 +35,7 @@ depend on the public `imessage-sdk` interface rather than provider internals.
 | `packages/imessage-sdk`         | Provider-neutral core package (`imessage-sdk`)                        |
 | `packages/providers/<provider>` | Independently published provider package                              |
 | `packages/providers/README.md`  | Cross-provider feature support matrix                                 |
-| `packages/chat-adapter`         | Beta Chat SDK integration (`@imessage-sdk/chat-adapter`)              |
+| `packages/chat-adapter`         | Chat SDK integration (`@imessage-sdk/chat-adapter`)                   |
 | `packages/eve-channel`          | Private placeholder for `@imessage-sdk/eve-channel`                   |
 | `packages/cli`                  | Private placeholder for `@imessage-sdk/cli`                           |
 | `examples/basic-blooio`         | Opt-in live example using only published Blooio and core APIs         |
@@ -324,9 +324,10 @@ Use conventional SemVer:
 - `minor`: backward-compatible features
 - `major`: breaking changes
 
-During the current beta, Changesets converts these into the appropriate prerelease version. Select
-only public packages actually affected. Tests, internal refactors, documentation-only changes, and
-private placeholder packages do not need a changeset unless they alter a published artifact.
+Select only public packages actually affected. Tests, internal refactors, documentation-only
+changes, and private placeholder packages do not need a changeset unless they alter a published
+artifact. When Changesets prerelease mode is active, eligible releases receive the configured
+prerelease suffix.
 
 Do not manually edit package versions or generated package changelogs during the regular release
 flow. The Version Packages pull request performs those updates. Do not publish from an agent session
