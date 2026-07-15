@@ -1,5 +1,17 @@
 # @imessage-sdk/chat-adapter
 
+## 0.1.0-beta.3
+
+### Patch Changes
+
+- [#19](https://github.com/jmisilo/imessage-sdk/pull/19) [`986e266`](https://github.com/jmisilo/imessage-sdk/commit/986e26609253e39802bb95f95a0476552593912a) Thanks [@jmisilo](https://github.com/jmisilo)! - Add the initial beta Chat SDK adapter with provider-aware clients, direct messages, attachments,
+  webhooks, reactions, typing, read state, versioned thread IDs, and persistent echo prevention.
+
+- [#19](https://github.com/jmisilo/imessage-sdk/pull/19) [`986e266`](https://github.com/jmisilo/imessage-sdk/commit/986e26609253e39802bb95f95a0476552593912a) Thanks [@jmisilo](https://github.com/jmisilo)! - Stop provider typing indicators after outbound message attempts and during adapter shutdown.
+
+- [#19](https://github.com/jmisilo/imessage-sdk/pull/19) [`986e266`](https://github.com/jmisilo/imessage-sdk/commit/986e26609253e39802bb95f95a0476552593912a) Thanks [@jmisilo](https://github.com/jmisilo)! - Expose inbound Photon attachments through Chat SDK `fetchData` with serialization-safe rehydration
+  metadata.
+
 ## 0.1.0-beta.2
 
 ### Patch Changes
