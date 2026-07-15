@@ -11,6 +11,9 @@ import {
 } from '../src/index.js';
 
 const TEST_CAPABILITIES = {
+  attachments: {
+    download: true,
+  },
   messages: {
     text: true,
     attachments: true,
@@ -66,10 +69,12 @@ function createProviderMessage(overrides: Partial<ProviderMessage> = {}): Provid
 
 function createTestProvider() {
   const close = vi.fn(async () => undefined);
+  const downloadAttachment = vi.fn(async () => new Uint8Array([1, 2, 3]));
 
   const provider = defineProvider({
     name: 'blooio',
     capabilities: TEST_CAPABILITIES,
+    attachments: { download: downloadAttachment },
     messages: {
       async send(input) {
         return createProviderMessage({ text: input.text ?? '' });
@@ -122,7 +127,7 @@ function createTestProvider() {
     close,
   });
 
-  return { close, provider };
+  return { close, downloadAttachment, provider };
 }
 
 describe('generic client', () => {
@@ -217,6 +222,37 @@ describe('generic client', () => {
           contentType: 'application/pdf',
         },
       ],
+    });
+  });
+
+  it('downloads provider attachments through the normalized client', async () => {
+    const { downloadAttachment, provider } = createTestProvider();
+    const client = createIMessageClient({ provider });
+
+    await expect(client.attachments.download('attachment-1')).resolves.toEqual(
+      new Uint8Array([1, 2, 3]),
+    );
+    expect(downloadAttachment).toHaveBeenCalledWith('attachment-1');
+    await expect(client.attachments.download('')).rejects.toMatchObject({
+      name: 'ValidationError',
+      code: 'invalid_attachment_id',
+    });
+  });
+
+  it('throws a typed error when attachment downloads are unavailable', async () => {
+    const { provider: baseProvider } = createTestProvider();
+    const provider = defineProvider({
+      ...baseProvider,
+      capabilities: {
+        ...baseProvider.capabilities,
+        attachments: { download: false },
+      } as const,
+    });
+    const client = createIMessageClient({ provider });
+
+    await expect(client.attachments.download('attachment-1')).rejects.toMatchObject({
+      name: 'UnsupportedCapabilityError',
+      capability: 'attachments.download',
     });
   });
 

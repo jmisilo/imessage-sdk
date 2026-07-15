@@ -1,5 +1,9 @@
 /** Runtime feature declaration for one configured provider connection. */
 export interface IMessageCapabilities {
+  /** Optional for backward compatibility with providers defined before attachment downloads. */
+  readonly attachments?: {
+    readonly download: boolean;
+  };
   readonly messages: {
     readonly text: boolean;
     readonly attachments: boolean;
@@ -21,7 +25,6 @@ export interface IMessageCapabilities {
     readonly readReceipts: boolean;
   };
   readonly events: {
-    /** @experimental Webhook normalization may change before a future stable release. */
     readonly webhooks: boolean;
     readonly stream: boolean;
   };

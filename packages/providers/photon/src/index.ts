@@ -31,6 +31,7 @@ import type {
   IMessageService,
   IMessageStatus,
   MessageLocator,
+  ProviderAttachments,
   ProviderConversation,
   ProviderConversations,
   ProviderEvent,
@@ -63,6 +64,9 @@ const TOKEN_RETRY_MS = 30_000;
 const WEBHOOK_TOLERANCE_SECONDS = 300;
 
 export const PHOTON_CAPABILITIES = {
+  attachments: {
+    download: true,
+  },
   messages: {
     text: true,
     attachments: true,
@@ -119,11 +123,11 @@ export interface PhotonConversations extends ProviderConversations {
 }
 
 export interface PhotonProvider extends IMessageProvider<'photon', typeof PHOTON_CAPABILITIES> {
+  readonly attachments: ProviderAttachments;
   readonly messages: PhotonMessages;
   readonly conversations: PhotonConversations;
   readonly reactions: ProviderReactions;
   readonly typing: Required<ProviderTyping>;
-  /** @experimental Webhook normalization may change before a future stable release. */
   readonly webhooks: ProviderWebhooks;
   readonly events: ProviderEvents;
   readonly connection: PhotonConnection;
@@ -230,6 +234,16 @@ function mapAttachment(
     size: attachment.totalBytes,
     raw: attachment,
   };
+}
+
+function concatenateBytes(chunks: readonly Uint8Array[]): Uint8Array {
+  const output = new Uint8Array(chunks.reduce((total, chunk) => total + chunk.byteLength, 0));
+  let offset = 0;
+  for (const chunk of chunks) {
+    output.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return output;
 }
 
 function mapConversation(chat: Chat): ProviderConversation {
@@ -972,6 +986,24 @@ export function photon(options: PhotonOptions = {}): PhotonProvider {
   return defineProvider({
     name: 'photon',
     capabilities: PHOTON_CAPABILITIES,
+    attachments: {
+      async download(attachmentId) {
+        return await run('attachments.download', async ({ client }) => {
+          const download = client.attachments.downloadStream(attachmentId);
+          activeStreams.add(download as TypedEventStream<unknown>);
+          const chunks: Uint8Array[] = [];
+          try {
+            for await (const frame of download) {
+              if (frame.type === 'primaryChunk') chunks.push(frame.data);
+            }
+            return concatenateBytes(chunks);
+          } finally {
+            activeStreams.delete(download as TypedEventStream<unknown>);
+            await download.close();
+          }
+        });
+      },
+    },
     messages,
     conversations,
     reactions: {

@@ -102,6 +102,26 @@ function mockPhotonClient() {
       uti: 'public.data',
     },
   }));
+  const attachmentDownload = stream([
+    {
+      type: 'header' as const,
+      info: {
+        fileName: 'photo.jpg',
+        guid: 'attachment-photo',
+        isHidden: false,
+        isOutgoing: false,
+        isSticker: false,
+        mimeType: 'image/jpeg',
+        totalBytes: 3,
+        transferState: 'finished' as const,
+        uti: 'public.jpeg',
+      },
+    },
+    { type: 'primaryChunk' as const, data: new Uint8Array([1, 2]) },
+    { type: 'primaryChunk' as const, data: new Uint8Array([3]) },
+    { type: 'companionChunk' as const, data: new Uint8Array([9]) },
+  ]);
+  const downloadStream = vi.fn(() => attachmentDownload);
   const createChat = vi.fn(async () => ({ chat }));
   const getChat = vi.fn(async () => chat);
   const markRead = vi.fn(async () => undefined);
@@ -110,7 +130,7 @@ function mockPhotonClient() {
   const catchUp = vi.fn(() => stream<CatchUpEvent>([]));
   const close = vi.fn(async () => undefined);
   const client = {
-    attachments: { upload },
+    attachments: { downloadStream, upload },
     chats: {
       create: createChat,
       get: getChat,
@@ -136,6 +156,8 @@ function mockPhotonClient() {
     createChat,
     getChat,
     getMessage,
+    downloadStream,
+    downloadStreamClose: attachmentDownload.close,
     markRead,
     sendAttachment,
     sendMultipart,
@@ -391,6 +413,18 @@ describe('Photon provider', () => {
     expect(attachment.provider).toBe('photon');
   });
 
+  it('downloads primary attachment bytes and closes the Photon stream', async () => {
+    const client = createIMessageClient({
+      provider: photon({ projectId: 'project', projectSecret: 'secret' }),
+    });
+
+    const data = await client.attachments.download('attachment-photo');
+
+    expect(data).toEqual(new Uint8Array([1, 2, 3]));
+    expect(sdk.downloadStream).toHaveBeenCalledWith('attachment-photo');
+    expect(sdk.downloadStreamClose).toHaveBeenCalledOnce();
+  });
+
   it('maps conversations, reactions, typing, and mark-read', async () => {
     const client = createIMessageClient({
       provider: photon({ projectId: 'project', projectSecret: 'secret' }),
@@ -526,6 +560,55 @@ describe('Photon provider', () => {
       providerEventId: 'webhook-1',
       type: 'message.received',
       message: { text: 'Webhook hello', conversationId: chat.guid },
+    });
+
+    const attachmentBody = JSON.stringify({
+      event: 'messages',
+      space: { id: chat.guid, phone: ownPhone },
+      message: {
+        id: 'webhook-message-2',
+        direction: 'inbound',
+        timestamp: '2023-11-14T22:13:20.000Z',
+        sender: { id: recipientPhone },
+        space: { id: chat.guid, phone: ownPhone },
+        content: {
+          type: 'attachment',
+          id: 'attachment-photo',
+          name: 'photo.jpg',
+          mimeType: 'image/jpeg',
+          size: 3,
+        },
+      },
+    });
+    const attachmentDigest = await signature(secret, `v0:${timestamp}:${attachmentBody}`);
+    const attachmentEvents = await client.webhooks.handle(
+      new Request('https://example.test/photon', {
+        method: 'POST',
+        headers: {
+          'x-spectrum-timestamp': String(timestamp),
+          'x-spectrum-signature': `v0=${attachmentDigest}`,
+          'x-spectrum-webhook-id': 'webhook-2',
+        },
+        body: attachmentBody,
+      }),
+    );
+
+    expect(attachmentEvents[0]).toMatchObject({
+      provider: 'photon',
+      providerEventId: 'webhook-2',
+      type: 'message.received',
+      message: {
+        conversationId: chat.guid,
+        attachments: [
+          {
+            id: 'attachment-photo',
+            kind: 'image',
+            filename: 'photo.jpg',
+            contentType: 'image/jpeg',
+            size: 3,
+          },
+        ],
+      },
     });
     expect(moduleMocks.issueTokens).not.toHaveBeenCalled();
   });

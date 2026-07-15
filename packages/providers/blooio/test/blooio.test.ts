@@ -270,7 +270,17 @@ describe('Blooio provider', () => {
     expect(events[0]).toMatchObject({
       type: 'message.received',
       provider: 'blooio',
-      message: { text: 'Inbound', direction: 'inbound' },
+      message: {
+        text: 'Inbound',
+        direction: 'inbound',
+        attachments: [
+          {
+            kind: 'image',
+            url: 'https://cdn.test/inbound.jpg',
+            filename: 'inbound.jpg',
+          },
+        ],
+      },
     });
     expect(events[1]).toMatchObject({
       type: 'reaction.added',

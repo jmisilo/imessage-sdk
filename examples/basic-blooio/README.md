@@ -45,8 +45,6 @@ pnpm --filter @imessage-sdk/example-basic-blooio start
 
 ## Inbound webhooks
 
-Webhook verification and normalized webhook events are experimental in v0.1.
-
 The webhook example uses Hono and requires only:
 
 ```dotenv

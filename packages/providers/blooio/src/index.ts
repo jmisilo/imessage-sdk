@@ -35,6 +35,9 @@ const DEFAULT_BASE_URL = 'https://api.blooio.com/v2/api';
 const DEFAULT_WEBHOOK_TOLERANCE_SECONDS = 300;
 
 export const BLOOIO_CAPABILITIES = {
+  attachments: {
+    download: false,
+  },
   messages: {
     text: true,
     attachments: true,
@@ -109,7 +112,6 @@ export interface BlooioProvider extends IMessageProvider<'blooio', typeof BLOOIO
   readonly conversations: BlooioConversations;
   readonly reactions: ProviderReactions;
   readonly typing: Required<ProviderTyping>;
-  /** @experimental Webhook normalization may change before a future stable release. */
   readonly webhooks: ProviderWebhooks;
   readonly numbers: BlooioNumbers;
 }
@@ -177,15 +179,22 @@ function mapService(value: unknown): IMessageService {
   }
 }
 
-function attachmentKind(contentType: string | undefined): IMessageAttachment['kind'] {
+function attachmentKind(
+  contentType: string | undefined,
+  filename?: string,
+  url?: string,
+): IMessageAttachment['kind'] {
   if (contentType?.startsWith('image/')) return 'image';
   if (contentType?.startsWith('video/')) return 'video';
+  const path = (filename ?? url ?? '').split(/[?#]/u, 1)[0]?.toLowerCase() ?? '';
+  if (/\.(?:avif|bmp|gif|heic|heif|jpe?g|png|tiff?|webp)$/u.test(path)) return 'image';
+  if (/\.(?:3gp|avi|m4v|mkv|mov|mp4|mpeg|mpg|webm)$/u.test(path)) return 'video';
   return 'file';
 }
 
 function mapAttachment(value: unknown): IMessageAttachment {
   if (typeof value === 'string') {
-    return { kind: 'file', url: value, raw: value };
+    return { kind: attachmentKind(undefined, undefined, value), url: value, raw: value };
   }
 
   const parsedItem = JsonObjectSchema.safeParse(value);
@@ -199,7 +208,7 @@ function mapAttachment(value: unknown): IMessageAttachment {
   const filename = OptionalNonEmptyStringSchema.parse(item['name']);
   const size = OptionalNumberSchema.parse(item['size']);
   const result: IMessageAttachment = {
-    kind: attachmentKind(contentType),
+    kind: attachmentKind(contentType, filename, url),
     raw: value,
     ...(id === undefined ? {} : { id }),
     ...(url === undefined ? {} : { url }),

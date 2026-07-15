@@ -3,8 +3,7 @@
 Provider-neutral iMessage adapter for [Chat SDK](https://chat-sdk.dev), powered by
 [`imessage-sdk`](https://www.npmjs.com/package/imessage-sdk).
 
-> This package is currently in beta. Its webhook-facing API may change while normalized
-> `imessage-sdk` webhooks remain experimental.
+> This package is currently in beta and its adapter API may change before a stable release.
 
 ## Install
 
@@ -101,6 +100,18 @@ Chat SDK Markdown and AST messages are rendered as plain text. Outbound Chat SDK
 URLs, `Blob`s, `Buffer`s, and `ArrayBuffer`s are converted into normalized SDK attachments.
 The selected provider may reject source types that it cannot transport; public URLs are the
 currently verified cross-provider path.
+
+Inbound public attachments, including Blooio attachments, expose `url`. Providers with
+authenticated attachment downloads expose Chat SDK's lazy `fetchData()` instead. Photon downloads
+the primary attachment bytes using the provider connection:
+
+```ts
+const [attachment] = message.attachments;
+const data = await attachment?.fetchData?.();
+```
+
+The adapter also stores provider, connection, and attachment IDs in `fetchMetadata`, allowing Chat
+SDK to reconstruct `fetchData` after queue or state serialization.
 
 ```ts
 await chat.thread(threadId).post({
