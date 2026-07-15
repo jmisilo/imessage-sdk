@@ -10,5 +10,9 @@
     "@imessage-sdk/blooio": "0.1.2",
     "@imessage-sdk/photon": "0.1.1"
   },
-  "changesets": []
+  "changesets": [
+    "bright-chats-wave",
+    "calm-phones-type",
+    "chat-attachments-fetch"
+  ]
 }
