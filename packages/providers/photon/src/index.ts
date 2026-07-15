@@ -139,9 +139,14 @@ interface CloudConnection {
   close(): Promise<void>;
 }
 
+const WebhookTextSchema = z.object({
+  type: z.literal('text'),
+  text: z.string(),
+});
+
 const WebhookAttachmentSchema = z.object({
   type: z.literal('attachment'),
-  id: z.string().min(1),
+  id: z.string().min(1).optional(),
   name: z.string().min(1),
   mimeType: z.string().min(1),
   size: z.number().finite().nonnegative().optional(),
@@ -157,7 +162,7 @@ const WebhookMessageSchema = z.object({
     phone: z.string().min(1).optional(),
   }),
   content: z.union([
-    z.object({ type: z.literal('text'), text: z.string() }),
+    WebhookTextSchema,
     WebhookAttachmentSchema,
     z.object({
       type: z.literal('reaction'),
@@ -168,7 +173,7 @@ const WebhookMessageSchema = z.object({
       type: z.literal('group'),
       items: z.array(
         z.object({
-          content: WebhookAttachmentSchema,
+          content: z.unknown(),
         }),
       ),
     }),
@@ -635,16 +640,30 @@ function webhookAttachments(
     content.type === 'attachment'
       ? [content]
       : content.type === 'group'
-        ? content.items.map((item) => item.content)
+        ? content.items.flatMap((item) => {
+            const parsed = WebhookAttachmentSchema.safeParse(item.content);
+            return parsed.success ? [parsed.data] : [];
+          })
         : [];
   return values.map((item) => ({
     kind: attachmentKind(item.mimeType),
-    id: item.id,
+    ...(item.id === undefined ? {} : { id: item.id }),
     filename: item.name,
     contentType: item.mimeType,
     ...(item.size === undefined ? {} : { size: item.size }),
     raw: item,
   }));
+}
+
+function webhookText(content: z.infer<typeof WebhookMessageSchema>['content']): string {
+  if (content.type === 'text') return content.text;
+  if (content.type !== 'group') return '';
+  return content.items
+    .flatMap((item) => {
+      const parsed = WebhookTextSchema.safeParse(item.content);
+      return parsed.success ? [parsed.data.text] : [];
+    })
+    .join('\n');
 }
 
 /** Creates a Photon provider backed by a Spectrum Cloud project. */
@@ -1091,7 +1110,7 @@ export function photon(options: PhotonOptions = {}): PhotonProvider {
               direction: 'inbound',
               sender: address(message.sender.id),
               recipients: [own],
-              text: message.content.type === 'text' ? message.content.text : '',
+              text: webhookText(message.content),
               attachments: webhookAttachments(message.content),
               service: 'imessage',
               status: 'delivered',

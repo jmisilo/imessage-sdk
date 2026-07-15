@@ -198,6 +198,7 @@ describe('IMessageAdapter', () => {
         attachmentId: 'attachment-photo',
       },
     });
+    expect(message?.text).toBe('Hello');
     await expect(attachment?.fetchData?.()).resolves.toEqual(Buffer.from([1, 2, 3]));
     if (attachment?.fetchMetadata === undefined) {
       throw new TypeError('Expected attachment fetch metadata');

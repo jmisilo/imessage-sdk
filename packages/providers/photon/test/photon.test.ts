@@ -572,11 +572,19 @@ describe('Photon provider', () => {
         sender: { id: recipientPhone },
         space: { id: chat.guid, phone: ownPhone },
         content: {
-          type: 'attachment',
-          id: 'attachment-photo',
-          name: 'photo.jpg',
-          mimeType: 'image/jpeg',
-          size: 3,
+          type: 'group',
+          items: [
+            { content: { type: 'text', text: 'Webhook photo' } },
+            {
+              content: {
+                type: 'attachment',
+                id: 'attachment-photo',
+                name: 'photo.jpg',
+                mimeType: 'image/jpeg',
+                size: 3,
+              },
+            },
+          ],
         },
       },
     });
@@ -599,6 +607,7 @@ describe('Photon provider', () => {
       type: 'message.received',
       message: {
         conversationId: chat.guid,
+        text: 'Webhook photo',
         attachments: [
           {
             id: 'attachment-photo',
@@ -606,6 +615,52 @@ describe('Photon provider', () => {
             filename: 'photo.jpg',
             contentType: 'image/jpeg',
             size: 3,
+          },
+        ],
+      },
+    });
+
+    const attachmentWithoutIdBody = JSON.stringify({
+      event: 'messages',
+      space: { id: chat.guid, phone: ownPhone },
+      message: {
+        id: 'webhook-message-3',
+        direction: 'inbound',
+        timestamp: '2023-11-14T22:13:20.000Z',
+        sender: { id: recipientPhone },
+        space: { id: chat.guid, phone: ownPhone },
+        content: {
+          type: 'attachment',
+          name: 'document.pdf',
+          mimeType: 'application/pdf',
+          size: 10,
+        },
+      },
+    });
+    const attachmentWithoutIdDigest = await signature(
+      secret,
+      `v0:${timestamp}:${attachmentWithoutIdBody}`,
+    );
+    const attachmentWithoutIdEvents = await client.webhooks.handle(
+      new Request('https://example.test/photon', {
+        method: 'POST',
+        headers: {
+          'x-spectrum-timestamp': String(timestamp),
+          'x-spectrum-signature': `v0=${attachmentWithoutIdDigest}`,
+        },
+        body: attachmentWithoutIdBody,
+      }),
+    );
+
+    expect(attachmentWithoutIdEvents[0]).toMatchObject({
+      type: 'message.received',
+      message: {
+        attachments: [
+          {
+            kind: 'file',
+            filename: 'document.pdf',
+            contentType: 'application/pdf',
+            size: 10,
           },
         ],
       },
