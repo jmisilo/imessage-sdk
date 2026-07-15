@@ -1,5 +1,12 @@
 # @imessage-sdk/photon
 
+## 0.1.2
+
+### Patch Changes
+
+- [#22](https://github.com/jmisilo/imessage-sdk/pull/22) [`948ed20`](https://github.com/jmisilo/imessage-sdk/commit/948ed20c9758316ddeefa2586495f8a0073eb82a) Thanks [@jmisilo](https://github.com/jmisilo)! - Normalize Photon webhook messages that contain text and attachments together, and accept
+  attachment metadata when Photon omits a downloadable attachment ID.
+
 ## 0.1.1
 
 ### Patch Changes
