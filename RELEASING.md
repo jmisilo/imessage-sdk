@@ -5,14 +5,14 @@ requests, npm trusted publishing, and package-specific GitHub Releases.
 
 ## What is published
 
-| Directory                     | npm package                  | Status              |
-| ----------------------------- | ---------------------------- | ------------------- |
-| `packages/imessage-sdk`       | `imessage-sdk`               | Public              |
-| `packages/providers/blooio`   | `@imessage-sdk/blooio`       | Public              |
-| `packages/providers/photon`   | `@imessage-sdk/photon`       | Public              |
-| `packages/providers/sendblue` | `@imessage-sdk/sendblue`     | Public              |
-| `packages/chat-adapter`       | `@imessage-sdk/chat-adapter` | Public              |
-| `packages/cli`                | `@imessage-sdk/cli`          | Private placeholder |
+| Directory                     | npm package                  | Status |
+| ----------------------------- | ---------------------------- | ------ |
+| `packages/imessage-sdk`       | `imessage-sdk`               | Public |
+| `packages/providers/blooio`   | `@imessage-sdk/blooio`       | Public |
+| `packages/providers/photon`   | `@imessage-sdk/photon`       | Public |
+| `packages/providers/sendblue` | `@imessage-sdk/sendblue`     | Public |
+| `packages/chat-adapter`       | `@imessage-sdk/chat-adapter` | Public |
+| `packages/cli`                | `imessage-cli`               | Public |
 
 ## One-time local setup
 
@@ -102,7 +102,7 @@ changelogs.
 
 Configure trusted publishing separately in the settings for `imessage-sdk`,
 `@imessage-sdk/blooio`, `@imessage-sdk/photon`, `@imessage-sdk/sendblue`, and
-`@imessage-sdk/chat-adapter`:
+`@imessage-sdk/chat-adapter`, and `imessage-cli`:
 
 ```text
 Provider: GitHub Actions
@@ -152,6 +152,25 @@ pnpm package:check
 PACKAGE_DIR=$(mktemp -d)
 pnpm --filter @imessage-sdk/<provider> pack --pack-destination "$PACKAGE_DIR"
 npm publish "$PACKAGE_DIR/<tarball>.tgz" --access public --provenance=false
+```
+
+For the first `imessage-cli` beta, enter Changesets prerelease mode before the Version Packages
+pull request is generated:
+
+```bash
+pnpm changeset pre enter beta
+```
+
+After that pull request versions the package, bootstrap its exact tarball locally with `--tag beta`,
+then configure `imessage-cli` as another trusted publisher using the settings above:
+
+```bash
+PACKAGE_DIR=$(mktemp -d)
+pnpm --filter imessage-cli pack --pack-destination "$PACKAGE_DIR"
+npm publish "$PACKAGE_DIR/imessage-cli-0.1.0-beta.0.tgz" \
+  --tag beta \
+  --access public \
+  --provenance=false
 ```
 
 Add `--tag beta` when bootstrapping a prerelease. For the initial stable Sendblue release, use:
@@ -282,6 +301,8 @@ npm view @imessage-sdk/blooio version
 npm dist-tag ls @imessage-sdk/blooio
 npm view @imessage-sdk/sendblue version
 npm dist-tag ls @imessage-sdk/sendblue
+npm view imessage-cli@beta version
+npm dist-tag ls imessage-cli
 ```
 
 Then install the release in a clean external project using `@beta` during the

@@ -3,6 +3,9 @@
 Provider adapters are independently installable packages built on the public
 `imessage-sdk` contract.
 
+All providers in this directory are also bundled with [`imessage-cli`](../cli). A workspace test
+fails when a provider package is added without a corresponding CLI registry entry.
+
 | Capability                    | Blooio                 | Photon Cloud                      | Sendblue                 |
 | ----------------------------- | ---------------------- | --------------------------------- | ------------------------ |
 | Package                       | `@imessage-sdk/blooio` | `@imessage-sdk/photon`            | `@imessage-sdk/sendblue` |

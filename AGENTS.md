@@ -36,7 +36,7 @@ depend on the public `imessage-sdk` interface rather than provider internals.
 | `packages/providers/<provider>` | Independently published provider package                              |
 | `packages/providers/README.md`  | Cross-provider feature support matrix                                 |
 | `packages/chat-adapter`         | Chat SDK integration (`@imessage-sdk/chat-adapter`)                   |
-| `packages/cli`                  | Private placeholder for `@imessage-sdk/cli`                           |
+| `packages/cli`                  | Provider-neutral CLI (`imessage-cli`)                                 |
 | `examples/basic-blooio`         | Opt-in live example using only published Blooio and core APIs         |
 | `test/package-consumer`         | Clean TypeScript consumer used by package smoke tests                 |
 | `.changeset`                    | Changesets configuration, prerelease state, and pending release notes |
@@ -51,7 +51,7 @@ The repository does not use Turborepo. Workspace membership is defined only by
 ```text
 @imessage-sdk/<provider>     -> imessage-sdk
 @imessage-sdk/chat-adapter   -> imessage-sdk
-future adapters and CLI      -> imessage-sdk
+imessage-cli                 -> imessage-sdk + every official provider
 ```
 
 Workspace packages import package names, never source files from another package:
@@ -263,8 +263,9 @@ When adding a provider:
 6. Add an opt-in live integration test when real API verification is possible.
 7. Add the provider to `packages/providers/README.md` and its support matrix.
 8. Add the package to `scripts/check-packages.sh` and `test/package-consumer`.
-9. Document install, configuration, verified operations, and known limitations.
-10. Add a Changeset for all affected public packages.
+9. Add the provider to the `imessage-cli` registry; its completeness test must pass.
+10. Document install, configuration, verified operations, and known limitations.
+11. Add a Changeset for all affected public packages.
 
 ## Coding standards
 
@@ -324,7 +325,7 @@ Use conventional SemVer:
 - `major`: breaking changes
 
 Select only public packages actually affected. Tests, internal refactors, documentation-only
-changes, and private placeholder packages do not need a changeset unless they alter a published
+changes, and private workspace packages do not need a changeset unless they alter a published
 artifact. When Changesets prerelease mode is active, eligible releases receive the configured
 prerelease suffix.
 

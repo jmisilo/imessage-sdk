@@ -3,9 +3,10 @@
 A provider-neutral TypeScript conversation layer for iMessage infrastructure.
 
 The repository contains the provider-neutral [`imessage-sdk`](./packages/imessage-sdk)
-core, independently installable providers, and the
+core, independently installable providers, the
 [`@imessage-sdk/chat-adapter`](./packages/chat-adapter) for
-[Chat SDK](https://chat-sdk.dev). The core also exposes a public contract for custom providers.
+[Chat SDK](https://chat-sdk.dev), and [`imessage-cli`](./packages/cli) for local users and agents.
+The core also exposes a public contract for custom providers.
 
 ## Install
 
@@ -62,13 +63,29 @@ packages/
 │   ├── photon/            @imessage-sdk/photon
 │   └── sendblue/          @imessage-sdk/sendblue
 ├── chat-adapter/          @imessage-sdk/chat-adapter
-└── cli/                   Private placeholder for @imessage-sdk/cli
+└── cli/                   imessage-cli
 examples/
 └── basic-blooio/          Opt-in live Blooio API and webhook example
 ```
 
-The core, provider packages, and Chat SDK adapter are independently publishable. The repository
-root and remaining future package placeholders are private.
+The core, provider packages, Chat SDK adapter, and CLI are independently publishable. The
+repository root is private.
+
+## CLI
+
+The CLI bundles every official provider and supports flags, saved OS-keychain connections, stable
+JSON input/output, attachments, replies, normalized operations, and an experimental Hono-based
+local signed-webhook server:
+
+```bash
+npx imessage-cli@beta send \
+  --provider blooio \
+  --to +15551234567 \
+  --text 'Hello'
+```
+
+See the [CLI README](./packages/cli/README.md) for credential storage, agent input, provider
+commands, and ngrok or Cloudflare Tunnel setup.
 
 ## Chat SDK
 
@@ -119,7 +136,8 @@ then creates package-specific Git tags and GitHub Releases, such as
 
 Before publishing, the same release command used by automation also packs each
 public package, runs Publint and Are the Types Wrong, installs all tarballs in
-a clean strict-TypeScript consumer, and checks every public import.
+a clean strict-TypeScript consumer, checks every public import, and invokes the
+installed CLI.
 
 Stable releases publish under npm's `latest` dist-tag, while prereleases publish under `beta`. See
 [RELEASING.md](./RELEASING.md) for the complete maintainer workflow.
