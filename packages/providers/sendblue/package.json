@@ -1,0 +1,58 @@
+{
+  "name": "@imessage-sdk/sendblue",
+  "version": "0.0.0",
+  "description": "Sendblue provider for imessage-sdk",
+  "author": "jmisilo",
+  "keywords": [
+    "imessage",
+    "sendblue",
+    "messaging",
+    "typescript"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jmisilo/imessage-sdk.git",
+    "directory": "packages/providers/sendblue"
+  },
+  "homepage": "https://github.com/jmisilo/imessage-sdk/tree/main/packages/providers/sendblue#readme",
+  "bugs": {
+    "url": "https://github.com/jmisilo/imessage-sdk/issues"
+  },
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:integration": "SENDBLUE_LIVE_TEST=1 vitest run test/sendblue.integration.test.ts",
+    "test:watch": "vitest",
+    "typecheck": "tsc --project tsconfig.json --noEmit"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "dependencies": {
+    "imessage-sdk": "workspace:^",
+    "zod": "^4.4.3"
+  }
+}

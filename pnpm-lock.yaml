@@ -94,12 +94,6 @@ importers:
         specifier: workspace:^
         version: link:../imessage-sdk
 
-  packages/eve-channel:
-    dependencies:
-      imessage-sdk:
-        specifier: workspace:^
-        version: link:../imessage-sdk
-
   packages/imessage-sdk: {}
 
   packages/providers/blooio:
@@ -119,6 +113,15 @@ importers:
       '@spectrum-ts/core':
         specifier: ^9.3.1
         version: 9.3.1(typescript@6.0.3)
+      imessage-sdk:
+        specifier: workspace:^
+        version: link:../../imessage-sdk
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
+
+  packages/providers/sendblue:
+    dependencies:
       imessage-sdk:
         specifier: workspace:^
         version: link:../../imessage-sdk
