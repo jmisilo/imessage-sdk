@@ -36,7 +36,6 @@ depend on the public `imessage-sdk` interface rather than provider internals.
 | `packages/providers/<provider>` | Independently published provider package                              |
 | `packages/providers/README.md`  | Cross-provider feature support matrix                                 |
 | `packages/chat-adapter`         | Chat SDK integration (`@imessage-sdk/chat-adapter`)                   |
-| `packages/eve-channel`          | Private placeholder for `@imessage-sdk/eve-channel`                   |
 | `packages/cli`                  | Private placeholder for `@imessage-sdk/cli`                           |
 | `examples/basic-blooio`         | Opt-in live example using only published Blooio and core APIs         |
 | `test/package-consumer`         | Clean TypeScript consumer used by package smoke tests                 |

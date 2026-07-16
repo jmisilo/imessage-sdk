@@ -5,14 +5,14 @@ requests, npm trusted publishing, and package-specific GitHub Releases.
 
 ## What is published
 
-| Directory                   | npm package                  | Status              |
-| --------------------------- | ---------------------------- | ------------------- |
-| `packages/imessage-sdk`     | `imessage-sdk`               | Public              |
-| `packages/providers/blooio` | `@imessage-sdk/blooio`       | Public              |
-| `packages/providers/photon` | `@imessage-sdk/photon`       | Public              |
-| `packages/chat-adapter`     | `@imessage-sdk/chat-adapter` | Public              |
-| `packages/eve-channel`      | `@imessage-sdk/eve-channel`  | Private placeholder |
-| `packages/cli`              | `@imessage-sdk/cli`          | Private placeholder |
+| Directory                     | npm package                  | Status              |
+| ----------------------------- | ---------------------------- | ------------------- |
+| `packages/imessage-sdk`       | `imessage-sdk`               | Public              |
+| `packages/providers/blooio`   | `@imessage-sdk/blooio`       | Public              |
+| `packages/providers/photon`   | `@imessage-sdk/photon`       | Public              |
+| `packages/providers/sendblue` | `@imessage-sdk/sendblue`     | Public              |
+| `packages/chat-adapter`       | `@imessage-sdk/chat-adapter` | Public              |
+| `packages/cli`                | `@imessage-sdk/cli`          | Private placeholder |
 
 ## One-time local setup
 
@@ -41,9 +41,9 @@ Normal releases run in GitHub Actions through OIDC and need neither a local
 3. Bootstrap a new package name manually before configuring OIDC for it.
 4. Configure trusted publishing separately for every public package.
 
-The initial prereleases currently own `latest` as a consequence of package
-bootstrap. The first stable release will replace it with `0.1.0`; no dist-tag
-removal is required.
+A package's first prerelease may also receive `latest` as a consequence of npm
+bootstrap. Its first stable release replaces that tag; no dist-tag removal is
+required.
 
 ## One-time GitHub setup
 
@@ -101,7 +101,8 @@ changelogs.
 ## Trusted publishing on npm
 
 Configure trusted publishing separately in the settings for `imessage-sdk`,
-`@imessage-sdk/blooio`, `@imessage-sdk/photon`, and `@imessage-sdk/chat-adapter`:
+`@imessage-sdk/blooio`, `@imessage-sdk/photon`, `@imessage-sdk/sendblue`, and
+`@imessage-sdk/chat-adapter`:
 
 ```text
 Provider: GitHub Actions
@@ -128,11 +129,15 @@ npm cannot configure a trusted publisher for a package that does not exist.
 For the first version of a future provider or adapter:
 
 1. Merge its package and changeset through the normal reviewed PR flow.
-2. Build and pack it from the exact `main` commit that will be tagged.
-3. Inspect and publish the tarball locally under `beta`.
-4. Configure that package's npm trusted publisher.
-5. Backfill the matching Git tag and GitHub prerelease if automation did not
-   create them.
+2. Review and merge the generated Version Packages pull request. The first
+   automated publish can fail with npm `E404` because trusted publishing cannot
+   be configured until the package exists.
+3. Check out the resulting `main` commit, then build and pack the versioned
+   package from that exact commit.
+4. Inspect and publish the tarball locally under the intended dist-tag.
+5. Configure that package's npm trusted publisher.
+6. Backfill the matching Git tag and GitHub Release if automation did not create
+   them. Mark the GitHub Release as a prerelease only for a prerelease version.
 
 For example:
 
@@ -146,7 +151,17 @@ pnpm package:check
 
 PACKAGE_DIR=$(mktemp -d)
 pnpm --filter @imessage-sdk/<provider> pack --pack-destination "$PACKAGE_DIR"
-npm publish "$PACKAGE_DIR/<tarball>.tgz" --tag beta --access public --provenance=false
+npm publish "$PACKAGE_DIR/<tarball>.tgz" --access public --provenance=false
+```
+
+Add `--tag beta` when bootstrapping a prerelease. For the initial stable Sendblue release, use:
+
+```bash
+PACKAGE_DIR=$(mktemp -d)
+pnpm --filter @imessage-sdk/sendblue pack --pack-destination "$PACKAGE_DIR"
+npm publish "$PACKAGE_DIR/imessage-sdk-sendblue-0.1.0.tgz" \
+  --access public \
+  --provenance=false
 ```
 
 Direct package publishing commands can incorrectly request provenance outside
@@ -261,10 +276,12 @@ imessage-sdk@0.1.0-beta.1
 Confirm that npm versions and dist-tags match the generated package versions:
 
 ```bash
-npm view imessage-sdk@beta version
+npm view imessage-sdk version
 npm dist-tag ls imessage-sdk
-npm view @imessage-sdk/blooio@beta version
+npm view @imessage-sdk/blooio version
 npm dist-tag ls @imessage-sdk/blooio
+npm view @imessage-sdk/sendblue version
+npm dist-tag ls @imessage-sdk/sendblue
 ```
 
 Then install the release in a clean external project using `@beta` during the

@@ -24,8 +24,9 @@ const client = createIMessageClient({
 
 P.S. remember to create your own [Blooio account](https://app.blooio.com/signup?ref=BLOO-2NS4AJM8) and configure the provider with your credentials.
 
-Available normalized v0.1 operations, including signed webhook verification and normalized webhook
-events, are stable.
+The stable v0.1 providers are Blooio, Photon, and Sendblue. See the
+[provider feature matrix](./packages/providers/README.md) for their verified surfaces and current
+limitations.
 
 See the [package README](./packages/imessage-sdk/README.md) for the public API,
 provider configuration, capability boundary, and live integration tests.
@@ -58,9 +59,9 @@ packages/
 ├── imessage-sdk/          Provider-neutral core package
 ├── providers/
 │   ├── blooio/            @imessage-sdk/blooio
-│   └── photon/            @imessage-sdk/photon
+│   ├── photon/            @imessage-sdk/photon
+│   └── sendblue/          @imessage-sdk/sendblue
 ├── chat-adapter/          @imessage-sdk/chat-adapter
-├── eve-channel/           Private placeholder for @imessage-sdk/eve-channel
 └── cli/                   Private placeholder for @imessage-sdk/cli
 examples/
 └── basic-blooio/          Opt-in live Blooio API and webhook example
@@ -120,7 +121,7 @@ Before publishing, the same release command used by automation also packs each
 public package, runs Publint and Are the Types Wrong, installs all tarballs in
 a clean strict-TypeScript consumer, and checks every public import.
 
-Releases publish under npm's `latest` dist-tag. See
+Stable releases publish under npm's `latest` dist-tag, while prereleases publish under `beta`. See
 [RELEASING.md](./RELEASING.md) for the complete maintainer workflow.
 
 ### Release automation setup
