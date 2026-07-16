@@ -10,5 +10,7 @@
     "@imessage-sdk/photon": "0.1.2",
     "@imessage-sdk/sendblue": "0.1.0"
   },
-  "changesets": []
+  "changesets": [
+    "quiet-messages-cli"
+  ]
 }
