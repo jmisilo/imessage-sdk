@@ -1,6 +1,6 @@
 {
   "name": "@imessage-sdk/sendblue",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Sendblue provider for imessage-sdk",
   "author": "jmisilo",
   "keywords": [
