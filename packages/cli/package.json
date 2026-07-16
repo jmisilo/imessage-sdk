@@ -1,11 +1,63 @@
 {
-  "name": "@imessage-sdk/cli",
+  "name": "imessage-cli",
   "version": "0.0.0",
-  "private": true,
-  "description": "Command-line interface for imessage-sdk",
+  "description": "Provider-neutral command-line interface for iMessage infrastructure",
+  "author": "jmisilo",
+  "keywords": [
+    "imessage",
+    "cli",
+    "messaging",
+    "automation",
+    "ai-agents"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jmisilo/imessage-sdk.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://imessage-sdk.dev",
+  "bugs": {
+    "url": "https://github.com/jmisilo/imessage-sdk/issues"
+  },
   "license": "MIT",
   "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "bin": {
+    "imessage-cli": "./dist/cli.js"
+  },
+  "exports": {
+    "./package.json": "./package.json"
+  },
+  "engines": {
+    "node": "^20.19.0 || ^22.13.0 || >=24"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:integration": "pnpm build && node test/run-integration.mjs",
+    "test:watch": "vitest",
+    "typecheck": "tsc --project tsconfig.json --noEmit"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "dependencies": {
-    "imessage-sdk": "workspace:^"
+    "@hono/node-server": "^2.0.10",
+    "@imessage-sdk/blooio": "workspace:^",
+    "@imessage-sdk/photon": "workspace:^",
+    "@imessage-sdk/sendblue": "workspace:^",
+    "@inquirer/prompts": "^8.5.2",
+    "@napi-rs/keyring": "^1.3.0",
+    "clipanion": "3.2.1",
+    "hono": "^4.12.30",
+    "imessage-sdk": "workspace:^",
+    "zod": "^4.4.3"
   }
 }

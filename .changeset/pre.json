@@ -1,0 +1,14 @@
+{
+  "mode": "pre",
+  "tag": "beta",
+  "initialVersions": {
+    "@imessage-sdk/example-basic-blooio": "0.0.0",
+    "@imessage-sdk/chat-adapter": "0.1.0",
+    "imessage-cli": "0.0.0",
+    "imessage-sdk": "0.1.3",
+    "@imessage-sdk/blooio": "0.1.2",
+    "@imessage-sdk/photon": "0.1.2",
+    "@imessage-sdk/sendblue": "0.1.0"
+  },
+  "changesets": []
+}

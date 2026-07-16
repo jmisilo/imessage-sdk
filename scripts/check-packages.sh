@@ -15,6 +15,7 @@ pnpm --filter @imessage-sdk/blooio pack --pack-destination "${PACKAGE_DIR}"
 pnpm --filter @imessage-sdk/photon pack --pack-destination "${PACKAGE_DIR}"
 pnpm --filter @imessage-sdk/sendblue pack --pack-destination "${PACKAGE_DIR}"
 pnpm --filter @imessage-sdk/chat-adapter pack --pack-destination "${PACKAGE_DIR}"
+pnpm --filter imessage-cli pack --pack-destination "${PACKAGE_DIR}"
 
 TARBALLS=("${PACKAGE_DIR}"/*.tgz)
 for package_path in "${TARBALLS[@]}"; do
@@ -39,4 +40,5 @@ pnpm exec tsc --project "${CONSUMER_DIR}/tsconfig.json"
     await import("@imessage-sdk/chat-adapter");
     await import("chat");
   '
+  ./node_modules/.bin/imessage-cli provider list --json >/dev/null
 )
