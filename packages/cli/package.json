@@ -1,6 +1,6 @@
 {
   "name": "imessage-cli",
-  "version": "0.1.0-beta.0",
+  "version": "0.1.0",
   "description": "Provider-neutral command-line interface for iMessage infrastructure",
   "author": "jmisilo",
   "keywords": [
