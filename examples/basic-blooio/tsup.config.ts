@@ -2,10 +2,11 @@ import { defineConfig } from 'tsup';
 
 export default defineConfig({
   entry: {
-    index: 'src/index.ts',
-    webhook: 'src/webhook.ts',
+    index: 'examples/basic-blooio/src/index.ts',
+    webhook: 'examples/basic-blooio/src/webhook.ts',
   },
   format: ['esm'],
+  outDir: 'examples/basic-blooio/dist',
   target: 'es2022',
   platform: 'node',
   clean: true,

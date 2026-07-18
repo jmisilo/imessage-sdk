@@ -1,6 +1,6 @@
 # Basic Blooio example
 
-This private workspace example exercises the public `imessage-sdk` and
+This repository example exercises the public `imessage-sdk` and
 `@imessage-sdk/blooio` packages against a real Blooio account.
 
 It covers:
@@ -40,7 +40,7 @@ The acknowledgement is required because the example sends real messages and
 performs interactions. Run it from the repository root:
 
 ```bash
-pnpm --filter @imessage-sdk/example-basic-blooio start
+pnpm start:example:basic-blooio
 ```
 
 ## Inbound webhooks
@@ -54,7 +54,7 @@ BLOOIO_WEBHOOK_SECRET=your-webhook-secret
 `BLOOIO_WEBHOOK_PORT` is optional and defaults to `3000`. Run:
 
 ```bash
-pnpm --filter @imessage-sdk/example-basic-blooio webhook
+pnpm start:example:basic-blooio:webhook
 ```
 
 Expose this route through an HTTPS tunnel and configure it in Blooio:

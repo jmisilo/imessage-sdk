@@ -105,6 +105,37 @@ async function temporaryConfig(): Promise<{ readonly directory: string; readonly
 }
 
 describe('imessage-cli', () => {
+  it.each([
+    { name: 'no arguments', arguments: [] as const },
+    { name: '-h', arguments: ['-h'] as const },
+    { name: '--help', arguments: ['--help'] as const },
+  ])('prints concise root help for $name', async ({ arguments: arguments_ }) => {
+    const config = await temporaryConfig();
+    const test = context(config.path);
+
+    const code = await runCli(arguments_, test.context);
+
+    expect(code).toBe(0);
+    expect(test.stdout.text()).toContain('Usage: imessage-cli <command> [options]');
+    expect(test.stdout.text()).toContain('send                         send text');
+    expect(test.stdout.text()).toContain(
+      'Run imessage-cli <command> --help for detailed command options.',
+    );
+    expect(test.stdout.text()).not.toContain('--project-secret');
+    expect(test.stderr.text()).toBe('');
+  });
+
+  it('supports the conventional uppercase version shortcut', async () => {
+    const config = await temporaryConfig();
+    const test = context(config.path);
+
+    const code = await runCli(['-V'], test.context);
+
+    expect(code).toBe(0);
+    expect(test.stdout.text()).toMatch(/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?\n$/u);
+    expect(test.stderr.text()).toBe('');
+  });
+
   it('requires an explicit opt-in for the experimental webhook server', async () => {
     const config = await temporaryConfig();
     const test = context(config.path);

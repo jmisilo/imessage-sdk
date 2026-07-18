@@ -18,7 +18,8 @@
     "node": "^20.19.0 || ^22.13.0 || >=24"
   },
   "scripts": {
-    "build": "pnpm --recursive --if-present build",
+    "build": "pnpm --recursive --if-present build && pnpm build:example:basic-blooio",
+    "build:example:basic-blooio": "tsup --config examples/basic-blooio/tsup.config.ts",
     "changeset": "changeset",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -27,10 +28,14 @@
     "package:check": "bash scripts/check-packages.sh",
     "release": "pnpm lint && pnpm build && pnpm typecheck && pnpm test && pnpm package:check && node scripts/publish-packages.mjs",
     "test": "pnpm --recursive --if-present test",
-    "typecheck": "pnpm --recursive --if-present typecheck",
+    "start:example:basic-blooio": "pnpm build:example:basic-blooio && node --env-file=examples/basic-blooio/.env examples/basic-blooio/dist/index.js",
+    "start:example:basic-blooio:webhook": "pnpm build:example:basic-blooio && node --env-file=examples/basic-blooio/.env examples/basic-blooio/dist/webhook.js",
+    "typecheck": "pnpm --recursive --if-present typecheck && tsc --project examples/basic-blooio/tsconfig.json --noEmit",
     "version-packages": "changeset version"
   },
   "devDependencies": {
+    "@hono/node-server": "^2.0.10",
+    "@imessage-sdk/blooio": "workspace:^",
     "@arethetypeswrong/cli": "^0.18.5",
     "@changesets/changelog-github": "^0.5.2",
     "@changesets/cli": "^2.29.8",
@@ -38,6 +43,8 @@
     "@ianvs/prettier-plugin-sort-imports": "^4.7.1",
     "@types/node": "^20.19.43",
     "eslint": "^10.7.0",
+    "hono": "^4.12.30",
+    "imessage-sdk": "workspace:^",
     "jiti": "^2.7.0",
     "prettier": "^3.9.5",
     "publint": "^0.3.21",

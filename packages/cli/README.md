@@ -7,21 +7,18 @@ Provider-neutral terminal access to iMessage infrastructure through
 keeps one provider connection per command, accepts flags or validated JSON input, and emits stable
 machine-readable results.
 
-> The CLI is currently in beta. Its command and JSON schemas may evolve before the first stable
-> release.
-
 ## Installation
 
-Install the current beta globally:
+Install globally:
 
 ```bash
-npm install --global imessage-cli@beta
+npm install --global imessage-cli
 ```
 
 Or run it without a global installation:
 
 ```bash
-npx imessage-cli@beta --help
+npx imessage-cli --help
 ```
 
 The CLI requires Node.js `^20.19.0`, `^22.13.0`, or `>=24`.
@@ -59,6 +56,17 @@ Then run:
 ```bash
 pnpm --filter imessage-cli test:integration
 ```
+
+To verify default saved connections instead of environment credentials, keep the fixture variables
+in `.env.cli-test` and run:
+
+```bash
+IMESSAGE_CLI_USE_SAVED_CONNECTIONS=1 \
+pnpm --filter imessage-cli test:integration
+```
+
+In this mode, the spawned CLI processes receive none of the provider credential environment
+variables, so each `--provider` selection must resolve its saved default connection.
 
 The test file is ignored by Git. The runner loads it directly, redacts known secrets from its
 own failure messages, and uses only per-command environment credentials—no persistent CLI

@@ -35,6 +35,7 @@ import { SendCommand } from './commands/send.js';
 import { TypingStartCommand, TypingStopCommand } from './commands/typing.js';
 import { WebhookServeCommand } from './commands/webhook.js';
 import { CliUsageError } from './errors.js';
+import { rootHelp } from './help.js';
 import { CommandOutput } from './output.js';
 
 const COMMANDS = [
@@ -85,6 +86,15 @@ export function createCli(): Cli<CliContext> {
 }
 
 export async function runCli(args: readonly string[], context: CliContext): Promise<number> {
+  if (args.length === 1 && (args[0] === '-h' || args[0] === '--help')) {
+    context.stdout.write(rootHelp());
+    return 0;
+  }
+  if (args.length === 1 && args[0] === '-V') {
+    context.stdout.write(`${packageJson.version}\n`);
+    return 0;
+  }
+
   const cli = createCli();
   let command;
   try {
