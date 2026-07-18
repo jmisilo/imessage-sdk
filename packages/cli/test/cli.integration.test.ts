@@ -7,7 +7,22 @@ const execFile = promisify(executeFile);
 const rootDirectory = new URL('../../../', import.meta.url);
 const binaryPath = new URL('../dist/cli.js', import.meta.url);
 const enabled = process.env['IMESSAGE_CLI_RUN_LIVE'] === '1';
+const useSavedConnections = process.env['IMESSAGE_CLI_USE_SAVED_CONNECTIONS'] === '1';
 const runId = `cli-live-${Date.now()}`;
+
+const PROVIDER_CREDENTIAL_ENVIRONMENT_VARIABLES = [
+  'BLOOIO_API_KEY',
+  'BLOOIO_FROM_NUMBER',
+  'BLOOIO_WEBHOOK_SECRET',
+  'PHOTON_PROJECT_ID',
+  'PHOTON_PROJECT_SECRET',
+  'PHOTON_PHONE_NUMBER',
+  'PHOTON_WEBHOOK_SECRET',
+  'SENDBLUE_API_KEY',
+  'SENDBLUE_API_SECRET',
+  'SENDBLUE_FROM_NUMBER',
+  'SENDBLUE_WEBHOOK_SECRET',
+] as const;
 
 interface CommandResult {
   readonly schemaVersion: 1;
@@ -329,10 +344,15 @@ async function testCommonInteractions(
 }
 
 async function command(arguments_: readonly string[]): Promise<CommandResult> {
+  const environment = { ...process.env };
+  if (useSavedConnections) {
+    for (const name of PROVIDER_CREDENTIAL_ENVIRONMENT_VARIABLES) delete environment[name];
+  }
+
   try {
     const { stdout } = await execFile(process.execPath, [binaryPath.pathname, ...arguments_], {
       cwd: rootDirectory.pathname,
-      env: process.env,
+      env: environment,
       maxBuffer: 1024 * 1024,
     });
     const parsed = JSON.parse(stdout) as unknown;
@@ -365,6 +385,10 @@ function field(value: unknown, name: string): string {
 }
 
 function required(name: string): string {
+  if (name === 'IMESSAGE_CLI_TEST_RECIPIENT') {
+    const override = process.env['IMESSAGE_CLI_TEST_RECIPIENT_OVERRIDE'];
+    if (override !== undefined && override.length > 0) return override;
+  }
   const value = process.env[name];
   if (value === undefined || value.length === 0) {
     throw new Error(`${name} is required when IMESSAGE_CLI_RUN_LIVE=1.`);

@@ -78,7 +78,7 @@ JSON input/output, attachments, replies, normalized operations, and an experimen
 local signed-webhook server:
 
 ```bash
-npx imessage-cli@beta send \
+npx imessage-cli send \
   --provider blooio \
   --to +15551234567 \
   --text 'Hello'

@@ -1,8 +1,7 @@
 {
-  "mode": "pre",
+  "mode": "exit",
   "tag": "beta",
   "initialVersions": {
-    "@imessage-sdk/example-basic-blooio": "0.0.0",
     "@imessage-sdk/chat-adapter": "0.1.0",
     "imessage-cli": "0.0.0",
     "imessage-sdk": "0.1.3",
