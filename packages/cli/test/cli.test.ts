@@ -168,7 +168,7 @@ describe('imessage-cli', () => {
       schemaVersion: 1,
       ok: true,
       command: 'provider.list',
-      data: [{ name: 'blooio' }, { name: 'photon' }, { name: 'sendblue' }],
+      data: [{ name: 'blooio' }, { name: 'comms' }, { name: 'photon' }, { name: 'sendblue' }],
     });
     expect(test.stderr.text()).toBe('');
   });

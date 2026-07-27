@@ -1,3 +1,3 @@
-export const BUILT_IN_PROVIDER_NAMES = ['blooio', 'photon', 'sendblue'] as const;
+export const BUILT_IN_PROVIDER_NAMES = ['blooio', 'comms', 'photon', 'sendblue'] as const;
 
 export type BuiltInProviderName = (typeof BUILT_IN_PROVIDER_NAMES)[number];

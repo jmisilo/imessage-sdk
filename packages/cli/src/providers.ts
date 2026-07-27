@@ -1,8 +1,10 @@
 import type { BlooioProvider } from '@imessage-sdk/blooio';
+import type { CommsProvider } from '@imessage-sdk/comms';
 import type { PhotonProvider } from '@imessage-sdk/photon';
 import type { SendblueProvider } from '@imessage-sdk/sendblue';
 import type { AnyIMessageProvider, IMessageCapabilities } from 'imessage-sdk';
 import { blooio, BLOOIO_CAPABILITIES } from '@imessage-sdk/blooio';
+import { comms, COMMS_CAPABILITIES } from '@imessage-sdk/comms';
 import { photon, PHOTON_CAPABILITIES } from '@imessage-sdk/photon';
 import { sendblue, SENDBLUE_CAPABILITIES } from '@imessage-sdk/sendblue';
 import { IMessageSDKError, ValidationError } from 'imessage-sdk';
@@ -47,6 +49,7 @@ export interface ProviderDoctorResult {
 
 interface BuiltInProviderMap {
   readonly blooio: BlooioProvider;
+  readonly comms: CommsProvider;
   readonly photon: PhotonProvider;
   readonly sendblue: SendblueProvider<false> | SendblueProvider<true>;
 }
@@ -155,6 +158,16 @@ function createPhoton(values: ProviderValues): PhotonProvider {
     ...(webhookSecret === undefined ? {} : { webhookSecret }),
     ...(timeout === undefined ? {} : { timeout }),
     ...(retry === undefined ? {} : { retry }),
+  });
+}
+
+function createComms(values: ProviderValues): CommsProvider {
+  const apiKey = optionalString('comms', values, 'apiKey');
+  const baseUrl = optionalString('comms', values, 'baseUrl');
+
+  return comms({
+    ...(apiKey === undefined ? {} : { apiKey }),
+    ...(baseUrl === undefined ? {} : { baseUrl }),
   });
 }
 
@@ -272,6 +285,23 @@ async function doctorPhoton(values: ProviderValues): Promise<ProviderDoctorResul
   }
 }
 
+async function doctorComms(values: ProviderValues): Promise<ProviderDoctorResult> {
+  try {
+    const provider = createComms(values);
+    const messages = await provider.messages.list({
+      since: new Date(0),
+      limit: 1,
+    });
+    return {
+      status: 'ok',
+      message: 'Comms credentials and read access were verified.',
+      details: { sampledMessageCount: messages.length },
+    };
+  } catch (error) {
+    return doctorError(error, values, ['apiKey']);
+  }
+}
+
 async function doctorSendblue(values: ProviderValues): Promise<ProviderDoctorResult> {
   try {
     createSendblue(values);
@@ -349,6 +379,32 @@ export const providerRegistry: ProviderRegistry = {
     ],
     create: createBlooio,
     doctor: doctorBlooio,
+  },
+  comms: {
+    name: 'comms',
+    displayName: 'Comms by Osis',
+    packageName: '@imessage-sdk/comms',
+    description: 'Comms hosted iMessage and SMS API by Osis.',
+    capabilities: COMMS_CAPABILITIES,
+    fields: [
+      {
+        key: 'apiKey',
+        label: 'API key',
+        kind: 'secret',
+        env: 'COMMS_API_KEY',
+        requiredFor: ['api', 'doctor'],
+        description: 'Bearer credential for Comms API operations.',
+      },
+      {
+        key: 'baseUrl',
+        label: 'API base URL',
+        kind: 'setting',
+        requiredFor: [],
+        description: 'Trusted Comms API endpoint override.',
+      },
+    ],
+    create: createComms,
+    doctor: doctorComms,
   },
   photon: {
     name: 'photon',
