@@ -9,6 +9,7 @@ requests, npm trusted publishing, and package-specific GitHub Releases.
 | ----------------------------- | ---------------------------- | ------ |
 | `packages/imessage-sdk`       | `imessage-sdk`               | Public |
 | `packages/providers/blooio`   | `@imessage-sdk/blooio`       | Public |
+| `packages/providers/comms`    | `@imessage-sdk/comms`        | Public |
 | `packages/providers/photon`   | `@imessage-sdk/photon`       | Public |
 | `packages/providers/sendblue` | `@imessage-sdk/sendblue`     | Public |
 | `packages/chat-adapter`       | `@imessage-sdk/chat-adapter` | Public |
@@ -101,8 +102,8 @@ changelogs.
 ## Trusted publishing on npm
 
 Configure trusted publishing separately in the settings for `imessage-sdk`,
-`@imessage-sdk/blooio`, `@imessage-sdk/photon`, `@imessage-sdk/sendblue`, and
-`@imessage-sdk/chat-adapter`, and `imessage-cli`:
+`@imessage-sdk/blooio`, `@imessage-sdk/comms`, `@imessage-sdk/photon`,
+`@imessage-sdk/sendblue`, `@imessage-sdk/chat-adapter`, and `imessage-cli`:
 
 ```text
 Provider: GitHub Actions
@@ -173,12 +174,12 @@ npm publish "$PACKAGE_DIR/imessage-cli-0.1.0-beta.0.tgz" \
   --provenance=false
 ```
 
-Add `--tag beta` when bootstrapping a prerelease. For the initial stable Sendblue release, use:
+Add `--tag beta` when bootstrapping a prerelease. For an initial stable provider release, use:
 
 ```bash
 PACKAGE_DIR=$(mktemp -d)
-pnpm --filter @imessage-sdk/sendblue pack --pack-destination "$PACKAGE_DIR"
-npm publish "$PACKAGE_DIR/imessage-sdk-sendblue-0.1.0.tgz" \
+pnpm --filter @imessage-sdk/<provider> pack --pack-destination "$PACKAGE_DIR"
+npm publish "$PACKAGE_DIR/imessage-sdk-<provider>-0.1.0.tgz" \
   --access public \
   --provenance=false
 ```

@@ -30,13 +30,14 @@ provider accounts. It sends messages and performs supported provider mutations, 
 start a webhook server or create a tunnel.
 
 Create an ignored repository-root `.env.cli-test` file with the credentials and dedicated test
-recipient/assets for all three providers. It must explicitly opt in:
+recipient/assets for all four providers. It must explicitly opt in:
 
 ```dotenv
 IMESSAGE_CLI_RUN_LIVE=1
 
 BLOOIO_API_KEY=
 BLOOIO_FROM_NUMBER=
+COMMS_API_KEY=
 IMESSAGE_CLI_TEST_RECIPIENT=
 IMESSAGE_CLI_TEST_IMAGE_URL=
 IMESSAGE_CLI_TEST_VIDEO_URL=
@@ -78,6 +79,7 @@ Every provider published from `packages/providers/*` is bundled with the CLI:
 
 ```text
 blooio
+comms
 photon
 sendblue
 ```
@@ -147,6 +149,7 @@ imessage-cli send \
 Current provider restrictions still apply:
 
 - Blooio requires public attachment URLs.
+- Comms currently supports plain-text messages only.
 - Photon accepts URLs and local files.
 - Sendblue accepts one URL or local file per message.
 - Group messaging remains disabled for the current official provider configurations.

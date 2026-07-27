@@ -6,14 +6,16 @@ import { BaseCommand } from './base-command.js';
 
 export abstract class ProviderOptionsCommand extends BaseCommand {
   provider = Option.String('--provider', {
-    description: 'Use Blooio, Photon, or Sendblue (and its configured default connection).',
+    description: 'Use Blooio, Comms, Photon, or Sendblue (and its configured default connection).',
   });
 
   noInput = Option.Boolean('--no-input', false, {
     description: 'Never prompt for missing credentials or settings.',
   });
 
-  apiKey = Option.String('--api-key', { description: 'One-time Blooio or Sendblue API key.' });
+  apiKey = Option.String('--api-key', {
+    description: 'One-time Blooio, Comms, or Sendblue API key.',
+  });
   apiSecret = Option.String('--api-secret', { description: 'One-time Sendblue API secret.' });
   projectId = Option.String('--project-id', { description: 'One-time Photon project ID.' });
   projectSecret = Option.String('--project-secret', {

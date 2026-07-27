@@ -14,6 +14,7 @@ const PROVIDER_CREDENTIAL_ENVIRONMENT_VARIABLES = [
   'BLOOIO_API_KEY',
   'BLOOIO_FROM_NUMBER',
   'BLOOIO_WEBHOOK_SECRET',
+  'COMMS_API_KEY',
   'PHOTON_PROJECT_ID',
   'PHOTON_PROJECT_SECRET',
   'PHOTON_PHONE_NUMBER',
@@ -40,6 +41,7 @@ interface SentMessage {
 const secretValues = [
   process.env['BLOOIO_API_KEY'],
   process.env['BLOOIO_WEBHOOK_SECRET'],
+  process.env['COMMS_API_KEY'],
   process.env['PHOTON_PROJECT_SECRET'],
   process.env['PHOTON_WEBHOOK_SECRET'],
   process.env['SENDBLUE_API_KEY'],
@@ -130,6 +132,15 @@ describe.skipIf(!enabled)('imessage-cli live provider API', () => {
     await testCommonInteractions('photon', text);
   }, 180_000);
 
+  it('exercises Comms through the built CLI', async () => {
+    const recipient = required('IMESSAGE_CLI_TEST_RECIPIENT');
+    const conversation = await openConversation('comms', recipient);
+    const text = await sendText('comms', conversation, 'Comms text');
+
+    expect(text.providerMessageId).toBeTruthy();
+    expect(text.conversationId).toBeTruthy();
+  }, 60_000);
+
   it('exercises Sendblue through the built CLI', async () => {
     const recipient = required('IMESSAGE_CLI_TEST_RECIPIENT');
     const imageUrl = required('IMESSAGE_CLI_TEST_IMAGE_URL');
@@ -205,7 +216,10 @@ describe.skipIf(!enabled)('imessage-cli live provider API', () => {
   }, 180_000);
 });
 
-async function openConversation(provider: 'blooio' | 'photon' | 'sendblue', recipient: string) {
+async function openConversation(
+  provider: 'blooio' | 'comms' | 'photon' | 'sendblue',
+  recipient: string,
+) {
   const result = await command([
     'conversation',
     'open',
@@ -220,7 +234,7 @@ async function openConversation(provider: 'blooio' | 'photon' | 'sendblue', reci
 }
 
 async function sendText(
-  provider: 'blooio' | 'photon' | 'sendblue',
+  provider: 'blooio' | 'comms' | 'photon' | 'sendblue',
   conversation: string,
   label: string,
 ): Promise<SentMessage> {

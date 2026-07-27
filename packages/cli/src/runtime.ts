@@ -133,6 +133,8 @@ export function providerValuesFromOverrides(
   switch (provider) {
     case 'blooio':
       return { ...shared, sender: overrides.fromNumber };
+    case 'comms':
+      return shared;
     case 'photon':
       return {
         projectId: overrides.projectId,

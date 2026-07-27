@@ -93,6 +93,9 @@ importers:
       '@imessage-sdk/blooio':
         specifier: workspace:^
         version: link:../providers/blooio
+      '@imessage-sdk/comms':
+        specifier: workspace:^
+        version: link:../providers/comms
       '@imessage-sdk/photon':
         specifier: workspace:^
         version: link:../providers/photon
@@ -121,6 +124,15 @@ importers:
   packages/imessage-sdk: {}
 
   packages/providers/blooio:
+    dependencies:
+      imessage-sdk:
+        specifier: workspace:^
+        version: link:../../imessage-sdk
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
+
+  packages/providers/comms:
     dependencies:
       imessage-sdk:
         specifier: workspace:^

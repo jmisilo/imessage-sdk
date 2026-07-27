@@ -56,6 +56,7 @@ describe('built-in provider registry', () => {
     };
 
     expect(requiredWebhookFields('blooio')).toEqual(['webhookSecret']);
+    expect(requiredWebhookFields('comms')).toEqual([]);
     expect(requiredWebhookFields('photon')).toEqual(['webhookSecret']);
     expect(requiredWebhookFields('sendblue')).toEqual(['fromNumber', 'webhookSecret']);
   });
@@ -73,6 +74,9 @@ describe('built-in provider registry', () => {
       projectSecret: 'project-secret',
       phone: '+15550000002',
     });
+    const comms = createProvider('comms', {
+      apiKey: 'comms-key',
+    });
     const sendblue = createProvider('sendblue', {
       apiKey: 'sendblue-key',
       apiSecret: 'sendblue-secret',
@@ -81,6 +85,7 @@ describe('built-in provider registry', () => {
     });
 
     expect(blooio.name).toBe('blooio');
+    expect(comms.name).toBe('comms');
     expect(photon.name).toBe('photon');
     expect(sendblue.name).toBe('sendblue');
     expect(sendblue.capabilities.conversations.markRead).toBe(true);
@@ -158,6 +163,36 @@ describe('built-in provider registry', () => {
       details: { fromNumber: '+15550000003', markReadEnabled: false },
     });
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('verifies Comms credentials through a non-mutating message lookup', async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      void input;
+      void init;
+      return new Response(JSON.stringify({ messages: [] }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await providerRegistry.comms.doctor({
+      apiKey: 'comms-key',
+      baseUrl: 'https://comms.test/api/v1/comms',
+    });
+
+    expect(result).toMatchObject({
+      status: 'ok',
+      details: { sampledMessageCount: 0 },
+    });
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://comms.test/api/v1/comms/messages?since=1970-01-01T00%3A00%3A00.000Z&limit=1',
+      expect.objectContaining({
+        headers: expect.any(Headers),
+      }),
+    );
+    const headers = new Headers(fetchMock.mock.calls[0]?.[1]?.headers);
+    expect(headers.get('authorization')).toBe('Bearer comms-key');
   });
 
   it('returns safe doctor failures without exposing secret values', async () => {

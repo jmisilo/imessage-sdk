@@ -54,6 +54,7 @@ const ConnectionConfigSchema = z
 const DefaultConnectionsSchema = z
   .object({
     blooio: ConnectionNameSchema.optional(),
+    comms: ConnectionNameSchema.optional(),
     photon: ConnectionNameSchema.optional(),
     sendblue: ConnectionNameSchema.optional(),
   })

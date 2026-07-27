@@ -25,7 +25,7 @@ const client = createIMessageClient({
 
 P.S. remember to create your own [Blooio account](https://app.blooio.com/signup?ref=BLOO-2NS4AJM8) and configure the provider with your credentials.
 
-The stable v0.1 providers are Blooio, Photon, and Sendblue. See the
+The official providers are Blooio, Comms by Osis, Photon, and Sendblue. See the
 [provider feature matrix](./packages/providers/README.md) for their verified surfaces and current
 limitations.
 
@@ -60,6 +60,7 @@ packages/
 ├── imessage-sdk/          Provider-neutral core package
 ├── providers/
 │   ├── blooio/            @imessage-sdk/blooio
+│   ├── comms/             @imessage-sdk/comms
 │   ├── photon/            @imessage-sdk/photon
 │   └── sendblue/          @imessage-sdk/sendblue
 ├── chat-adapter/          @imessage-sdk/chat-adapter

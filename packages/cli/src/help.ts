@@ -1,7 +1,7 @@
 export function rootHelp(): string {
   return `Usage: imessage-cli <command> [options]
 
-Send and interact with iMessage through Blooio, Photon, or Sendblue.
+Send and interact with iMessage through Blooio, Comms, Photon, or Sendblue.
 
 Options:
   -V, -v, --version            output the version number
