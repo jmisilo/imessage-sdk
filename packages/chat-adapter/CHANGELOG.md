@@ -1,5 +1,11 @@
 # @imessage-sdk/chat-adapter
 
+## 0.1.1
+
+### Patch Changes
+
+- [#32](https://github.com/jmisilo/imessage-sdk/pull/32) [`a20b1bd`](https://github.com/jmisilo/imessage-sdk/commit/a20b1bddc2aa53d47d8a5fc12d04d1aeca771b40) Thanks [@jmisilo](https://github.com/jmisilo)! - Update the Chat SDK runtime, peer, and test dependencies to version 4.35.0.
+
 ## 0.1.0
 
 ### Patch Changes
