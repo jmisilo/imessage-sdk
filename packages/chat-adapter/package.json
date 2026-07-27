@@ -52,16 +52,16 @@
     "provenance": true
   },
   "dependencies": {
-    "@chat-adapter/shared": "^4.33.0",
+    "@chat-adapter/shared": "^4.35.0",
     "imessage-sdk": "workspace:^",
     "zod": "^4.4.3"
   },
   "peerDependencies": {
-    "chat": "^4.33.0"
+    "chat": "^4.35.0"
   },
   "devDependencies": {
-    "@chat-adapter/state-memory": "4.33.0",
-    "@chat-adapter/tests": "4.33.0",
-    "chat": "4.33.0"
+    "@chat-adapter/state-memory": "4.35.0",
+    "@chat-adapter/tests": "4.35.0",
+    "chat": "4.35.0"
   }
 }
