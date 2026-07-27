@@ -1,6 +1,6 @@
 {
   "name": "@imessage-sdk/comms",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Comms by Osis provider for imessage-sdk",
   "author": "jmisilo",
   "keywords": [
